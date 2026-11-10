@@ -58,6 +58,7 @@ mod bokeh;
 mod classic3d;
 mod context;
 pub mod deferred;
+mod diagnostics;
 mod effects;
 mod fx_color;
 mod fx_depth;
@@ -79,13 +80,19 @@ mod fx_tone;
 mod fx_transition;
 mod fx_vr;
 mod fx_warp;
+mod inpaint;
+mod memcap;
 mod ops;
 mod particles;
+mod readback;
+mod upload;
 mod walk;
+mod yuv;
 
 use std::sync::Arc;
 
 pub use context::{GpuContext, GpuImage, TransferStats};
+pub use diagnostics::{ScopedError, ScopedErrorObserver};
 use effectcraft_effects::Buf;
 use effectcraft_project::ItemId;
 use effectcraft_raster::Image;
@@ -95,16 +102,43 @@ pub use wgpu;
 
 use crate::context::Enc;
 
+/// Why [`Gpu::within_memory`] discarded a frame.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum FrameError {
+    /// The GPU context is retired (device lost, a readback timed out, an uncaptured error).
+    Retired(String),
+    /// Out of video memory (or a driver reporting a failed allocation as an internal error),
+    /// with any validation errors it went on to cause.
+    Memory(String),
+    /// The device rejected a command with no allocation failure before it (an invalid texture
+    /// or parameters, #1319): a compositor bug, not memory pressure.
+    Validation(String),
+}
+
+impl std::fmt::Display for FrameError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FrameError::Retired(e) | FrameError::Memory(e) | FrameError::Validation(e) => f.write_str(e),
+        }
+    }
+}
+
+impl std::error::Error for FrameError {}
+
 /// The GPU compositor (cheap to clone; one device shared by all clones).
 #[derive(Clone)]
 pub struct Gpu {
+    scoped_observations: Arc<diagnostics::ScopedObservations>,
     ctx: Arc<GpuContext>,
     /// Backend::Auto's per-comp CPU / GPU timings.
     auto: Arc<effectcraft_render::AutoPick>,
+    /// (comp, reason) pairs already warned about when the GPU declined a frame.
+    declined: Arc<std::sync::Mutex<std::collections::HashSet<(u64, String)>>>,
 }
 
-/// A viewer frame left on the GPU: premultiplied RGBA8 (`wgpu::TextureFormat::Rgba8Unorm`),
-/// ready for `egui_wgpu::Renderer::register_native_texture`.
+/// A viewer frame left on the GPU: premultiplied RGBA8 (`wgpu::TextureFormat::Rgba8Unorm`) with
+/// a full mip chain (for minified views), ready for
+/// `egui_wgpu::Renderer::register_native_texture_with_sampler_options`.
 #[derive(Clone, Debug)]
 pub struct DisplayFrame {
     pub texture: wgpu::Texture,
@@ -116,7 +150,13 @@ impl Gpu {
     /// On a device of its own (CLI, tests, benchmarks); `None` without a usable adapter.
     #[cfg(not(target_arch = "wasm32"))]
     pub fn headless() -> Option<Gpu> {
-        GpuContext::headless().map(Gpu::from_context)
+        Gpu::try_headless().map_err(|e| log::info!("gpu: {e}")).ok()
+    }
+
+    /// [`Gpu::headless`], with why there is none.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn try_headless() -> Result<Gpu, String> {
+        pollster::block_on(GpuContext::request()).map(Gpu::from_context)
     }
 
     /// On an existing device (the desktop app shares egui-wgpu's).
@@ -125,7 +165,7 @@ impl Gpu {
     }
 
     pub fn from_context(ctx: GpuContext) -> Gpu {
-        Gpu { ctx: Arc::new(ctx), auto: Default::default() }
+        Gpu { ctx: Arc::new(ctx), auto: Default::default(), declined: Default::default(), scoped_observations: Default::default() }
     }
 
     /// A device of its own without blocking, with deferred readbacks (a browser worker, see
@@ -134,6 +174,13 @@ impl Gpu {
         let mut ctx = GpuContext::request().await?;
         ctx.set_deferred(true);
         Ok(Gpu::from_context(ctx))
+    }
+
+    /// Install a host's fixed-category observer before rendering. It is called at most once
+    /// per category across all clones, outside device/renderer locks. Returns false if already
+    /// registered. The observer must remain brief and must not perform GPU work.
+    pub fn set_scoped_error_observer(&self, observer: ScopedErrorObserver) -> bool {
+        self.scoped_observations.install(observer)
     }
 
     /// [`Gpu::request_deferred`] blocking (tests of the browser worker's path, natively).
@@ -157,7 +204,7 @@ impl Gpu {
     /// Deliver finished readbacks without blocking (native; the browser delivers them itself).
     pub fn poll(&self) {
         #[cfg(not(target_arch = "wasm32"))]
-        let _ = self.ctx.device.poll(wgpu::PollType::Poll);
+        let _ = self.ctx.poll_readbacks(wgpu::PollType::Poll);
     }
 
     /// `{passes, readbacks, inFlight}` of deferred rendering (diagnostics).
@@ -177,10 +224,14 @@ impl Gpu {
     /// Render a top-level comp frame and leave it on the GPU as a display texture (no
     /// readback unless a CPU fallback step needs one). `None` = render on the CPU.
     pub fn render_display(&self, r: &Renderer, comp: ItemId, t: Tick) -> Option<DisplayFrame> {
+        self.ctx.check_health().map_err(|e| log::error!("gpu display: {e}")).ok()?;
         let mut e = Enc::new(&self.ctx);
         let img = walk::render(&mut e, r, comp, t)?;
         let texture = e.display(&img);
         e.submit();
+        // Reject failures observed during rendering/submission before publishing the frame.
+        // A later device fault still requires the presentation host's lifecycle handling.
+        self.ctx.check_health().map_err(|e| log::error!("gpu display: {e}")).ok()?;
         Some(DisplayFrame { texture, width: img.width, height: img.height })
     }
 
@@ -192,11 +243,17 @@ impl Gpu {
     /// [`Gpu::read_display`] without blocking (the browser's main thread): `done` gets the bytes
     /// once the GPU has them.
     pub fn read_display_async(&self, f: &DisplayFrame, done: impl FnOnce(Option<Vec<u8>>) + wgpu::WasmNotSend + 'static) {
+        if let Err(e) = self.ctx.check_health() {
+            log::error!("gpu display readback: {e}");
+            crate::readback::reject(done, e);
+            return;
+        }
         Enc::new(&self.ctx).read_texture_async(&f.texture, f.width, f.height, 4, done);
     }
 
     /// Render a frame on the GPU and read it back (`None` = not handled).
     pub fn render(&self, r: &Renderer, comp: ItemId, t: Tick) -> Option<Image> {
+        self.ctx.check_health().ok()?;
         if !self.ctx.can_readback() {
             return None;
         }
@@ -244,30 +301,82 @@ impl Gpu {
         }
     }
 
-    /// Run GPU work `f` on this thread, catching the device running out of video memory
-    /// meanwhile (#106). `Err` (why) means the result is incomplete: a texture that failed to
-    /// allocate holds nothing. The uploaded layers and pooled textures are then freed, so the
-    /// next render has room. The browser reports it to the device's error handler instead.
-    pub fn within_memory<T>(&self, f: impl FnOnce() -> T) -> Result<T, String> {
+    /// Run work in native thread-local out-of-memory, internal-error and validation scopes. A
+    /// failed result is discarded and the textures and buffers kept for reuse are released;
+    /// callers can retry with a fresh CPU renderer. Some drivers report a failed allocation as an
+    /// internal error rather than out-of-memory (Adreno's `ERROR_INITIALIZATION_FAILED`, #591),
+    /// so both count. A failed allocation leaves an invalid texture whose use is then a
+    /// validation error (`Texture::create_view`, #1319): caught here, it fails this frame only
+    /// instead of retiring the GPU compositor for the session as an uncaptured error.
+    /// Browser callers use the host/owned-device failure bridge and bounded readbacks instead
+    /// of blocking their event loop on an error-scope future.
+    pub fn within_memory<T>(&self, f: impl FnOnce() -> T) -> Result<T, FrameError> {
+        if let Err(error) = self.ctx.check_health() {
+            // Queued jobs may still own this context after the UI detached it. Release its
+            // working caches before CPU fallback adds host-memory pressure (#3357).
+            self.ctx.discard_kept();
+            return Err(FrameError::Retired(error));
+        }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let scope = self.ctx.device.push_error_scope(wgpu::ErrorFilter::OutOfMemory);
+            let oom = self.ctx.device.push_error_scope(wgpu::ErrorFilter::OutOfMemory);
+            let internal = self.ctx.device.push_error_scope(wgpu::ErrorFilter::Internal);
+            let validation = self.ctx.device.push_error_scope(wgpu::ErrorFilter::Validation);
             let out = f();
-            match pollster::block_on(scope.pop()) {
-                Some(e) => {
-                    self.ctx.clear_uploads();
-                    Err(e.to_string())
-                }
-                None => Ok(out),
+            let validation = pollster::block_on(validation.pop());
+            let internal = pollster::block_on(internal.pop());
+            let oom = pollster::block_on(oom.pop());
+            // Preserve the typed scope observations before FrameError::Memory combines OOM
+            // and internal errors. An internal error alone is not evidence of actual OOM.
+            self.scoped_observations.report_scopes(oom.is_some(), internal.is_some(), validation.is_some());
+            let memory = oom.is_some() || internal.is_some();
+            // The allocation failure first: a validation error is often its consequence.
+            let errors: Vec<String> = [oom, internal, validation].into_iter().flatten().map(|e| e.to_string()).collect();
+            if errors.is_empty() {
+                return self.finish_memory_attempt(out);
             }
+            // Its textures go back to the pool when dropped: drop them before emptying it.
+            drop(out);
+            self.ctx.discard_kept();
+            let errors = errors.join("; then: ");
+            Err(if memory { FrameError::Memory(errors) } else { FrameError::Validation(errors) })
         }
         #[cfg(target_arch = "wasm32")]
-        Ok(f())
+        {
+            let out = f();
+            self.finish_memory_attempt(out)
+        }
     }
 
-    /// Wait for all submitted GPU work (benchmarks).
+    /// Retirement without a scoped error (for example, a readback timeout) must release
+    /// the same retained resources as a rejected allocation before the caller retries.
+    fn finish_memory_attempt<T>(&self, out: T) -> Result<T, FrameError> {
+        match self.ctx.check_health() {
+            Ok(()) => Ok(out),
+            Err(error) => {
+                // Dropping the result can return leased textures to the pool.
+                drop(out);
+                self.ctx.discard_kept();
+                Err(FrameError::Retired(error))
+            }
+        }
+    }
+
+    /// Why a frame was not rendered (best effort: device health, else size / support).
+    fn decline_reason(&self) -> String {
+        match self.ctx.check_health() {
+            Err(e) => format!("device failure / out of memory: {e}"),
+            Ok(()) if !self.ctx.can_readback() => "no GPU readback is available here".into(),
+            Ok(()) => format!(
+                "the GPU compositor did not handle the frame (a region of interest, unsupported content, a frame over the {} px texture limit, or an allocation failed)",
+                self.ctx.max_dim
+            ),
+        }
+    }
+
+    /// Wait for submitted GPU work with the readback deadline (benchmarks).
     pub fn wait(&self) {
-        let _ = self.ctx.device.poll(wgpu::PollType::wait_indefinitely());
+        let _ = self.ctx.poll_readbacks(wgpu::PollType::Wait { submission_index: None, timeout: Some(crate::readback::TIMEOUT) });
     }
 }
 
@@ -276,38 +385,110 @@ impl Accelerator for Gpu {
         self.ctx.name.clone()
     }
 
+    fn available(&self) -> bool {
+        self.ctx.check_health().is_ok()
+    }
+
     fn comp_frame(&self, r: &Renderer, comp: ItemId, t: Tick) -> Option<Image> {
-        self.render(r, comp, t)
+        let img = self.render(r, comp, t);
+        if img.is_none() {
+            // The caller renders the frame on the CPU; say so and why, or an export that falls
+            // back frame after frame is only mysteriously slow. Once per comp and reason as a
+            // warning (the log keeps only the last few hundred, for the System Report), then at
+            // debug level.
+            let reason = self.decline_reason();
+            let first = self.declined.lock().map(|mut seen| seen.len() < 256 && seen.insert((comp.0, reason.clone()))).unwrap_or(false);
+            if first {
+                log::warn!(target: "effectcraft_gpu", "GPU declined the frame at {:.3} s, the CPU renders it: {reason}", t.seconds());
+            } else {
+                log::debug!(target: "effectcraft_gpu", "GPU declined the frame at {:.3} s: {reason}", t.seconds());
+            }
+        }
+        img
+    }
+
+    fn comp_frame_yuv420(&self, r: &Renderer, comp: ItemId, t: Tick, bg: [f32; 3]) -> Option<Vec<u8>> {
+        self.ctx.check_health().ok()?;
+        if !self.ctx.can_readback() || self.ctx.deferred.is_some() {
+            return None;
+        }
+        // Sizes the kernel can't take fall back before any GPU work, not after a render.
+        let (w, h) = walk::frame_size(r, comp, t)?;
+        if !yuv::supported(w, h) || !yuv::fits_limits(w, h, &self.ctx.device.limits()) {
+            return None;
+        }
+        let yp = self.ctx.yuv_pipe()?;
+        let mut e = Enc::new(&self.ctx);
+        let img = walk::render(&mut e, r, comp, t)?;
+        let planes = yuv::convert(&mut e, yp, &img, bg)?;
+        // A device fault seen while the frame recorded makes the planes untrustworthy.
+        self.ctx.check_health().ok()?;
+        Some(planes)
     }
 
     fn supports_effect(&self, id: &str) -> bool {
-        self.ctx.can_readback() && effects::supports(id)
+        self.ctx.check_health().is_ok() && self.ctx.can_readback() && effects::supports(id)
     }
 
     fn effects(&self, chain: &[FxStep], buf: &Buf, levels: Option<f32>) -> Option<Buf> {
-        effects::run_chain(&mut Enc::new(&self.ctx), chain, buf, levels)
+        self.ctx.check_health().ok()?;
+        effects::run_chain(&mut Enc::lent(&self.ctx), chain, buf, levels)
     }
 
     fn raster_3d(&self, scene: &effectcraft_render::three_d::adv::Scene) -> Option<effectcraft_render::three_d::adv::Target> {
+        self.ctx.check_health().ok()?;
         adv3d::render(&self.ctx, scene)
     }
 
     fn render_3d(&self, run: &effectcraft_render::three_d::adv::Prepared) -> Option<effectcraft_render::three_d::adv::Rendered> {
+        self.ctx.check_health().ok()?;
         adv3d::render_prepared(&self.ctx, run)
     }
 
     fn particles(&self) -> Option<&dyn effectcraft_effects::psim::ParticleSim> {
+        self.ctx.check_health().ok()?;
         self.ctx.can_readback().then_some(self as &dyn effectcraft_effects::psim::ParticleSim)
+    }
+
+    fn inpaint(&self) -> Option<&dyn effectcraft_raster::inpaint::FillBackend> {
+        self.ctx.check_health().ok()?;
+        // Readback is synchronous-only, and a kernel that failed to build would make every stage
+        // fall back to the CPU *after* paying the upload and a failed dispatch (and the fill
+        // would still report the GPU path). Neither is a backend at all.
+        if !self.ctx.can_wait() || !crate::inpaint::KERNELS.iter().all(|e| self.ctx.has_kernel(e)) {
+            return None;
+        }
+        Some(self as &dyn effectcraft_raster::inpaint::FillBackend)
     }
 
     fn auto_pick(&self) -> Option<&effectcraft_render::AutoPick> {
         Some(&self.auto)
     }
 
+    fn frame_memory(&self) -> Option<effectcraft_render::FrameMemory> {
+        self.ctx.check_health().ok()?;
+        self.ctx.frame_memory()
+    }
+
+    fn render_end(&self) {
+        let (hits, misses) = self.ctx.pool_stats();
+        let pct = hits.saturating_mul(100) / hits.saturating_add(misses).max(1);
+        log::debug!(
+            target: "effectcraft_gpu",
+            "gpu pool: {hits} working textures reused, {misses} allocated ({pct}% reuse) so far"
+        );
+        self.ctx.trim_uploads();
+        self.ctx.trim_pool();
+    }
+
     fn frame_begin(&self) {
         if let Some(d) = self.ctx.deferred() {
             d.frame_begin();
         }
+    }
+
+    fn frame_end(&self) {
+        self.ctx.pool_frame_end();
     }
 
     fn pass_begin(&self) {
@@ -329,7 +510,7 @@ impl Accelerator for Gpu {
         // Natively the device delivers the readbacks when polled: wait for them here.
         #[cfg(not(target_arch = "wasm32"))]
         if d.in_flight() > 0 {
-            let _ = self.ctx.device.poll(wgpu::PollType::wait_indefinitely());
+            let _ = self.ctx.poll_readbacks(wgpu::PollType::Wait { submission_index: None, timeout: Some(crate::readback::TIMEOUT) });
         }
         Some(Box::pin(async move { d.settled().await }))
     }
@@ -337,61 +518,10 @@ impl Accelerator for Gpu {
 
 impl effectcraft_effects::psim::ParticleSim for Gpu {
     fn simulate(&self, req: &effectcraft_effects::psim::SimRequest) -> Option<Vec<effectcraft_effects::psim::SimParticle>> {
+        self.ctx.check_health().ok()?;
         particles::simulate(&self.ctx, req)
     }
 }
 
 #[cfg(test)]
 mod tests;
-#[cfg(test)]
-mod tests_3d;
-#[cfg(test)]
-mod tests_adjust;
-#[cfg(test)]
-mod tests_adv3d;
-#[cfg(test)]
-mod tests_deferred;
-#[cfg(test)]
-mod tests_deferred_jobs;
-#[cfg(test)]
-mod tests_fx_color;
-#[cfg(test)]
-mod tests_fx_depth;
-#[cfg(test)]
-mod tests_fx_distort;
-#[cfg(test)]
-mod tests_fx_extra;
-#[cfg(test)]
-mod tests_fx_gen2;
-#[cfg(test)]
-mod tests_fx_generate;
-#[cfg(test)]
-mod tests_fx_key;
-#[cfg(test)]
-mod tests_fx_light;
-#[cfg(test)]
-mod tests_fx_lut;
-#[cfg(test)]
-mod tests_fx_noise;
-#[cfg(test)]
-mod tests_fx_particles;
-#[cfg(test)]
-mod tests_fx_pixel2;
-#[cfg(test)]
-mod tests_fx_sim;
-#[cfg(test)]
-mod tests_fx_stylize;
-#[cfg(test)]
-mod tests_fx_text;
-#[cfg(test)]
-mod tests_fx_time;
-#[cfg(test)]
-mod tests_fx_tone;
-#[cfg(test)]
-mod tests_fx_transition;
-#[cfg(test)]
-mod tests_fx_vr;
-#[cfg(test)]
-mod tests_fx_warp;
-#[cfg(test)]
-mod tests_particles;

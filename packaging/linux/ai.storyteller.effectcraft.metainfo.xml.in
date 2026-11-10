@@ -12,7 +12,9 @@
   </developer>
   <description>
     <p>
-      EffectCraft is a motion graphics editor. Motion graphics and visual effects compositor
+      EffectCraft is an open-source motion graphics and visual effects compositor: layers with
+      keyframes and a graph editor, masks and shapes, text animators, expressions, 3D cameras and
+      lights, over 300 effects and a render queue, with GPU compositing.
     </p>
   </description>
   <launchable type="desktop-id">ai.storyteller.effectcraft.desktop</launchable>
@@ -35,8 +37,8 @@
   </keywords>
   <screenshots>
     <screenshot type="default">
-      <caption>Editing The Great Wave off Kanagawa with type layers and adjustment layers</caption>
-      <image>https://raw.githubusercontent.com/storytold/effectcraft/main/docs/images/effectcraft-demo.jpg</image>
+      <caption>Demo composition with text layers, timeline and properties</caption>
+      <image type="source">https://raw.githubusercontent.com/storytold/effectcraft/05955c08b4fd025f1a09882df72e6dbff1a8148a/docs/images/effectcraft-hero.png</image>
     </screenshot>
   </screenshots>
   <branding>

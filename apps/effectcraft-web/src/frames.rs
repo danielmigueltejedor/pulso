@@ -19,7 +19,7 @@
 //! frame times. Without WebGPU, frames render on the worker's CPU.
 
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use effectcraft_engine::offload::footage_files;
@@ -45,7 +45,8 @@ extern "C" {
 struct Fw {
     index: u32,
     mirror: Mirror,
-    files: HashSet<String>,
+    /// The footage files it was sent, with their versions (a replaced file goes again).
+    files: HashMap<String, u64>,
     busy: Option<(u64, RemoteDone)>,
     alive: bool,
     /// Its GPU adapter (after it reported), or why it has none.
@@ -99,7 +100,7 @@ impl WebFrames {
             let mut s = s.borrow_mut();
             for _ in 0..n {
                 let index = frame_worker_start(&crate::page_url(""), on.as_ref().unchecked_ref(), gpu);
-                s.workers.push(Fw { index, mirror: Mirror::default(), files: HashSet::new(), busy: None, alive: true, gpu: None });
+                s.workers.push(Fw { index, mirror: Mirror::default(), files: HashMap::new(), busy: None, alive: true, gpu: None });
             }
         });
         HANDLER.with(|h| *h.borrow_mut() = Some(on));
@@ -116,14 +117,13 @@ impl WebFrames {
             // Footage the worker hasn't got yet.
             let w = &mut s.workers[k];
             for p in footage_files(&job.project) {
-                if w.files.contains(&p) {
+                let Some((d, version)) = crate::files::get_versioned(&p) else { continue };
+                if w.files.get(&p) == Some(&version) {
                     continue;
                 }
-                if let Some(d) = crate::files::get(&p) {
-                    let bytes = js_sys::Uint8Array::from(&d[..]);
-                    frame_worker_post(w.index, &obj(&[("type", "file".into()), ("path", p.as_str().into()), ("bytes", bytes.into())]), &js_sys::Array::new());
-                    w.files.insert(p);
-                }
+                let bytes = js_sys::Uint8Array::from(&d[..]);
+                frame_worker_post(w.index, &obj(&[("type", "file".into()), ("path", p.as_str().into()), ("bytes", bytes.into())]), &js_sys::Array::new());
+                w.files.insert(p, version);
             }
             let sync = w.mirror.sync(job.revision, &job.project);
             let index = w.index;
@@ -311,10 +311,11 @@ pub fn stats() -> Value {
     })
 }
 
+type PendingFrameCheck = (js_sys::Function, js_sys::Function, (u32, u32, Vec<u8>), f64);
+
 thread_local! {
     /// `workerFrameCheck` promises waiting for their frame: id → (resolve, reject, local frame).
-    #[allow(clippy::type_complexity)]
-    static CHECKS: RefCell<std::collections::HashMap<u64, (js_sys::Function, js_sys::Function, (u32, u32, Vec<u8>), f64)>> = RefCell::new(Default::default());
+    static CHECKS: RefCell<std::collections::HashMap<u64, PendingFrameCheck>> = RefCell::new(Default::default());
 }
 
 /// `effectcraft.workerFrameCheck({time?, scale?, backend?})`: render the active comp's frame in
@@ -416,6 +417,7 @@ fn post_reply(r: &FrameReply, px: Option<&[u8]>) {
 fn new_server() -> FrameServer {
     let mut s = FrameServer::new(crate::worker::pool(), Some(Arc::new(effectcraft_expr::Expressions)));
     s.set_layer_store(Some(Arc::new(effectcraft_engine::render::PrefetchStore::default())));
+    s.set_virtual_id(Some(Arc::new(|path| crate::files::STORE.file_identity(path))));
     s
 }
 
@@ -471,10 +473,13 @@ pub async fn worker_frame(json: String) {
         g.settled().await;
         replies = SERVER.with(|c| c.borrow_mut().as_mut().map(|s| s.resume()).unwrap_or_default());
     }
+    // The source files the frame read, kept with its entry (checked by the page before use); a
+    // frame whose files can't all be named is not stored (#3184).
+    let (files, virtual_id) = SERVER.with(|c| c.borrow_mut().as_mut().map(|s| (s.take_files(), s.virtual_id().cloned())).unwrap_or_default());
     for (r, px) in replies {
         post_reply(&r, px.as_deref());
-        if let (FrameReply::Frame { width, height, .. }, Some(px), Some(key)) = (&r, &px, &disk) {
-            let entry = effectcraft_engine::render::disk_cache::frame_entry(*width, *height, px);
+        if let (FrameReply::Frame { width, height, .. }, Some(px), Some(key), Some(files)) = (&r, &px, &disk, &files) {
+            let Some(entry) = effectcraft_engine::render::disk_cache::frame_entry(*width, *height, px, files, virtual_id.as_deref()) else { continue };
             let name = format!("{key}.ecc");
             match JsFuture::from(crate::diskcache::cache_write(&name, js_sys::Uint8Array::from(&entry[..]))).await {
                 Ok(n) => post_reply(&FrameReply::Stored { key: key.clone(), bytes: n.as_f64().unwrap_or(entry.len() as f64) as u64, layer: false }, None),

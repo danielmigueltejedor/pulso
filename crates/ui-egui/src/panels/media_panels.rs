@@ -10,23 +10,26 @@
 //!   3D Camera Tracker / Roto Brush analyses, Content-Aware Fill, Scene Edit Detection) with a
 //!   progress bar and a cancel button, and the recently finished ones.
 
+use crate::i18n::tr;
 use effectcraft_engine::media_browser as mb;
 use effectcraft_engine::project::ItemId;
 use egui::{Align2, Color32, Rect, Sense, Stroke, pos2, vec2};
 use serde_json::{Value, json};
+use std::sync::Arc;
 
 use super::DragPayload;
 use super::panel_kit as kit;
-use crate::EffectcraftApp;
 use crate::theme::Tokens;
+use crate::{EffectcraftApp, widgets};
 
 // ---------------------------------------------------------------- Media Browser
 
 type Thumb = Option<(egui::TextureHandle, [u32; 2])>;
+type Listing = (f64, Arc<Result<Vec<mb::Entry>, String>>);
 
 /// Thumbnail of a file (cached per path; `None` while not decoded or not decodable).
 fn thumbnail(app: &EffectcraftApp, ctx: &egui::Context, path: &str, budget: &mut u32) -> Thumb {
-    let id = egui::Id::new(("mb-thumb", path));
+    let id = egui::Id::unique(("mb-thumb", path));
     if let Some(t) = ctx.data(|d| d.get_temp::<Thumb>(id)) {
         return t;
     }
@@ -60,26 +63,53 @@ fn thumbnail(app: &EffectcraftApp, ctx: &egui::Context, path: &str, budget: &mut
     thumb
 }
 
+/// The Favorites column: one clickable row per place, the current folder `dir` highlighted.
+fn places_column(app: &mut EffectcraftApp, ui: &mut egui::Ui, p: &egui::Painter, side: Rect, places: &[(String, String)], dir: &str) {
+    let t = app.tokens;
+    let mut fy = side.min.y + 22.0;
+    for (i, (name, path)) in places.iter().enumerate() {
+        let r = Rect::from_min_size(pos2(side.min.x, fy), vec2(side.width(), 20.0));
+        let resp = ui.interact(r, egui::Id::unique(("mb-fav", i)), Sense::click());
+        if path == dir {
+            p.rect_filled(r, 0.0, t.row_selected);
+        } else if resp.hovered() {
+            p.rect_filled(r, 0.0, t.hover);
+        }
+        p.text(pos2(r.min.x + 14.0, r.center().y), Align2::LEFT_CENTER, name, Tokens::ui(12.0), t.text);
+        app.auto.add(&format!("mediaBrowser.place.{i}"), r, name);
+        if resp.clicked() {
+            kit::exec(app, "mediaBrowser.go", json!({"path": path}));
+        }
+        fy += 20.0;
+    }
+}
+
+/// The Media Browser panel: a toolbar (up, home, favourite, "Media only" filter and the browser's
+/// own actions), the current path, the favourite places and a tile grid of the folder's entries
+/// with thumbnails for images and videos. Double-click opens a folder or imports a file; files
+/// drag out as [`DragPayload::Files`] and a context menu copies paths, imports (optionally into the
+/// comp) or adds a favourite. The listing is cached per folder and filter for a second, and every
+/// change runs a `mediaBrowser.*` command.
 pub fn media_browser(app: &mut EffectcraftApp, ui: &mut egui::Ui, rect: Rect) {
     let t = app.tokens;
     let ctx = ui.ctx().clone();
     let p = ui.painter().with_clip_rect(rect);
     p.rect_filled(rect, 0.0, t.panel_bg);
     let Some(b) = app.session.media_browser() else {
-        p.text(rect.center(), Align2::CENTER_CENTER, "The Media Browser is not available here (use File ▸ Import)", Tokens::ui(12.0), t.text_faint);
+        p.text(rect.center(), Align2::CENTER_CENTER, tr("The Media Browser is not available here (use File ▸ Import)"), Tokens::ui(12.0), t.text_faint);
         app.auto.add("mediaBrowser.unavailable", rect, "Media Browser unavailable");
         return;
     };
     let st = app.session.state.media_browser.clone();
     let dir = st.folder.clone().unwrap_or_else(|| b.home());
     // Listing cached per folder for a second.
-    let lid = egui::Id::new(("mb-list", dir.clone(), st.importable_only));
+    let lid = egui::Id::unique(("mb-list", dir.clone(), st.importable_only));
     let now = ctx.input(|i| i.time);
-    let listing: Option<(f64, Result<Vec<mb::Entry>, String>)> = ctx.data(|d| d.get_temp(lid));
+    let listing: Option<Listing> = ctx.data(|d| d.get_temp(lid));
     let entries = match listing {
         Some((at, l)) if now - at < 1.0 => l,
         _ => {
-            let l = b.list(&dir, st.importable_only);
+            let l = Arc::new(b.list(&dir, st.importable_only));
             ctx.data_mut(|d| d.insert_temp(lid, (now, l.clone())));
             l
         }
@@ -114,7 +144,7 @@ pub fn media_browser(app: &mut EffectcraftApp, ui: &mut egui::Ui, rect: Rect) {
         }
         if kit::button(app, ui, Rect::from_min_size(pos2(ax, y), vec2(w, 20.0)), &format!("mediaBrowser.action.{id}"), label, false) {
             kit::exec(app, "mediaBrowser.action", json!({"action": id}));
-            ctx.data_mut(|d| d.remove::<(f64, Result<Vec<mb::Entry>, String>)>(lid));
+            ctx.data_mut(|d| d.remove::<Listing>(lid));
         }
         ax -= 6.0;
     }
@@ -126,58 +156,37 @@ pub fn media_browser(app: &mut EffectcraftApp, ui: &mut egui::Ui, rect: Rect) {
     // Left column: favourites.
     let side = Rect::from_min_max(pos2(rect.min.x, rect.min.y + 54.0), pos2(rect.min.x + 160.0_f32.min(rect.width() * 0.3), rect.max.y));
     p.line_segment([side.right_top(), side.right_bottom()], Stroke::new(1.0, t.separator));
-    p.text(pos2(side.min.x + 10.0, side.min.y + 10.0), Align2::LEFT_CENTER, "Favorites", Tokens::semibold(11.5), t.text_dim);
-    let mut fy = side.min.y + 22.0;
+    p.text(pos2(side.min.x + 10.0, side.min.y + 10.0), Align2::LEFT_CENTER, tr("Favorites"), Tokens::semibold(11.5), t.text_dim);
     let mut places: Vec<(String, String)> = b.places();
     places.extend(
         st.favorites.iter().map(|f| (std::path::Path::new(f).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| f.clone()), f.clone())),
     );
-    for (i, (name, path)) in places.iter().enumerate() {
-        let r = Rect::from_min_size(pos2(side.min.x, fy), vec2(side.width(), 20.0));
-        let resp = ui.interact(r, egui::Id::new(("mb-fav", i)), Sense::click());
-        if *path == dir {
-            p.rect_filled(r, 0.0, t.row_selected);
-        } else if resp.hovered() {
-            p.rect_filled(r, 0.0, t.hover);
-        }
-        p.text(pos2(r.min.x + 14.0, r.center().y), Align2::LEFT_CENTER, name, Tokens::ui(12.0), t.text);
-        app.auto.add(&format!("mediaBrowser.place.{i}"), r, name);
-        if resp.clicked() {
-            kit::exec(app, "mediaBrowser.go", json!({"path": path}));
-        }
-        fy += 20.0;
-    }
+    places_column(app, ui, &p, side, &places, &dir);
     // Files.
     let list = Rect::from_min_max(pos2(side.max.x + 1.0, side.min.y), rect.max);
-    let entries = match entries {
+    let entries = match entries.as_ref() {
         Ok(e) => e,
         Err(e) => {
             p.text(list.center(), Align2::CENTER_CENTER, e, Tokens::ui(12.0), t.danger);
             return;
         }
     };
+    let scroll = widgets::PanelScroll::begin(ui, egui::Id::unique("mb-scroll"), list);
+    let list = scroll.content;
     let tile = vec2(140.0, 112.0);
     let cols = ((list.width() - 8.0) / tile.x).floor().max(1.0) as usize;
     let mut budget = 2u32;
-    let scroll_id = egui::Id::new("mb-scroll");
-    let mut scroll: f32 = ctx.data(|d| d.get_temp(scroll_id).unwrap_or(0.0));
-    if ui.rect_contains_pointer(list) {
-        scroll -= ctx.input(|i| i.smooth_scroll_delta.y);
-    }
-    let rows = entries.len().div_ceil(cols);
-    scroll = scroll.clamp(0.0, (rows as f32 * tile.y - list.height() + 8.0).max(0.0));
-    ctx.data_mut(|d| d.insert_temp(scroll_id, scroll));
     let lp = p.with_clip_rect(list);
     let mut actions: Vec<(&str, Value)> = vec![];
     for (i, e) in entries.iter().enumerate() {
         let r = Rect::from_min_size(
-            pos2(list.min.x + 8.0 + (i % cols) as f32 * tile.x, list.min.y + 8.0 + (i / cols) as f32 * tile.y - scroll),
+            pos2(list.min.x + 8.0 + (i % cols) as f32 * tile.x, list.min.y + 8.0 + (i / cols) as f32 * tile.y - scroll.offset),
             tile - vec2(8.0, 8.0),
         );
         if !r.intersects(list) {
             continue;
         }
-        let resp = ui.interact(r.intersect(list), egui::Id::new(("mb-entry", &e.path)), Sense::click_and_drag());
+        let resp = ui.interact(r.intersect(list), egui::Id::unique(("mb-entry", &e.path)), Sense::click_and_drag());
         app.auto.add(&format!("mediaBrowser.entry.{}", e.name), r, &e.name);
         lp.rect_filled(r, 4.0, if resp.hovered() { t.hover } else { t.row });
         let thumb = Rect::from_min_max(r.min + vec2(6.0, 6.0), pos2(r.max.x - 6.0, r.max.y - 26.0));
@@ -214,24 +223,33 @@ pub fn media_browser(app: &mut EffectcraftApp, ui: &mut egui::Ui, rect: Rect) {
         if resp.drag_started() && !e.is_dir && e.kind.is_some() {
             egui::DragAndDrop::set_payload(&ctx, DragPayload::Files(vec![e.path.clone()]));
         }
-        resp.context_menu(|ui| {
-            if !e.is_dir && ui.button("Import").clicked() {
+        crate::widgets::context_menu(&resp, |ui| {
+            let copy = ui.button(tr("Copy Source Path"));
+            app.auto.add(&format!("mediaBrowser.entry.{}.copySourcePath", e.name), copy.rect, "Copy Source Path");
+            if copy.clicked() {
+                if let Err(e) = crate::menus::invoke(app, &ctx, "mediaBrowser.copySourcePath", json!({"path": e.path})) {
+                    app.ui.status = e;
+                }
+                ui.close();
+            }
+            if !e.is_dir && ui.button(tr("Import")).clicked() {
                 actions.push(("mediaBrowser.import", json!({"paths": [e.path]})));
                 ui.close();
             }
-            if !e.is_dir && ui.button("Import and Add to Composition").clicked() {
+            if !e.is_dir && ui.button(tr("Import and Add to Composition")).clicked() {
                 actions.push(("mediaBrowser.import", json!({"paths": [e.path], "addToComp": true})));
                 ui.close();
             }
-            if e.is_dir && ui.button("Add to Favorites").clicked() {
+            if e.is_dir && ui.button(tr("Add to Favorites")).clicked() {
                 actions.push(("mediaBrowser.addFavorite", json!({"path": e.path})));
                 ui.close();
             }
         });
     }
     if entries.is_empty() {
-        lp.text(list.center(), Align2::CENTER_CENTER, "Empty folder", Tokens::ui(12.0), t.text_faint);
+        lp.text(list.center(), Align2::CENTER_CENTER, tr("Empty folder"), Tokens::ui(12.0), t.text_faint);
     }
+    scroll.end(ui, &mut app.auto, "mediaBrowser.scroll", entries.len().div_ceil(cols) as f32 * tile.y + 8.0, &t);
     if budget == 0 {
         ctx.request_repaint();
     }
@@ -259,10 +277,10 @@ fn rows_of(v: &Value) -> Vec<(String, String)> {
 
 /// An editable comment field; returns the edited text when it changes.
 fn comment_field(ui: &mut egui::Ui, r: Rect, id: &str, text: &str) -> Option<String> {
-    let key = egui::Id::new(("meta-comment", id));
+    let key = egui::Id::unique(("meta-comment", id));
     let mut buf: String = ui.data(|d| d.get_temp(key)).unwrap_or_else(|| text.to_string());
     let mut child = ui.new_child(egui::UiBuilder::new().max_rect(r));
-    let resp = child.add(egui::TextEdit::multiline(&mut buf).desired_width(r.width()).desired_rows(2).hint_text("Add a comment"));
+    let resp = child.add(egui::TextEdit::multiline(&mut buf).desired_width(r.width()).desired_rows(2).hint_text(tr("Add a comment")));
     if resp.has_focus() || resp.changed() {
         ui.data_mut(|d| d.insert_temp(key, buf.clone()));
     } else {
@@ -305,7 +323,7 @@ pub fn metadata(app: &mut EffectcraftApp, ui: &mut egui::Ui, rect: Rect) {
         }
         y += 10.0;
     } else {
-        p.text(pos2(x0, y + 8.0), Align2::LEFT_CENTER, "Select an item in the Project panel", Tokens::ui(12.0), t.text_faint);
+        p.text(pos2(x0, y + 8.0), Align2::LEFT_CENTER, tr("Select an item in the Project panel"), Tokens::ui(12.0), t.text_faint);
         y += 28.0;
     }
     let proj = v["project"].clone();
@@ -338,7 +356,7 @@ pub fn progress(app: &mut EffectcraftApp, ui: &mut egui::Ui, rect: Rect) {
     let x0 = rect.min.x + 12.0;
     let w = (rect.width() - 24.0).max(60.0);
     if jobs.is_empty() {
-        p.text(pos2(x0, y + 10.0), Align2::LEFT_CENTER, "No background jobs running", Tokens::ui(12.0), t.text_faint);
+        p.text(pos2(x0, y + 10.0), Align2::LEFT_CENTER, tr("No background jobs running"), Tokens::ui(12.0), t.text_faint);
         y += 28.0;
     } else {
         ui.ctx().request_repaint_after(std::time::Duration::from_millis(150));
@@ -348,9 +366,7 @@ pub fn progress(app: &mut EffectcraftApp, ui: &mut egui::Ui, rect: Rect) {
         let frac = j.fraction.unwrap_or(0.0) as f32;
         let pct = j.fraction.map(|f| format!("{:.0} %", f * 100.0)).unwrap_or_else(|| "…".into());
         p.text(pos2(x0 + w - 70.0, y + 8.0), Align2::RIGHT_CENTER, format!("{pct}  {}", j.message), Tokens::ui(11.0), t.text_dim);
-        let bar = Rect::from_min_size(pos2(x0, y + 20.0), vec2(w - 76.0, 6.0));
-        p.rect_filled(bar, 3.0, t.field_bg);
-        p.rect_filled(Rect::from_min_size(bar.min, vec2(bar.width() * frac.clamp(0.0, 1.0), bar.height())), 3.0, t.accent);
+        progress_bar(&p, Rect::from_min_size(pos2(x0, y + 20.0), vec2(w - 76.0, 6.0)), frac, &t);
         app.auto.add(&format!("progress.job.{}", j.id), Rect::from_min_size(pos2(x0, y), vec2(w, 28.0)), &j.label);
         if j.cancellable
             && kit::button(app, ui, Rect::from_min_size(pos2(x0 + w - 64.0, y + 12.0), vec2(64.0, 18.0)), &format!("progress.cancel.{}", j.id), "Cancel", false)
@@ -362,7 +378,7 @@ pub fn progress(app: &mut EffectcraftApp, ui: &mut egui::Ui, rect: Rect) {
     if !app.session.job_log.is_empty() {
         p.line_segment([pos2(x0, y), pos2(x0 + w, y)], Stroke::new(1.0, t.separator));
         y += 6.0;
-        p.text(pos2(x0, y + 8.0), Align2::LEFT_CENTER, "Finished", Tokens::semibold(11.5), t.text_dim);
+        p.text(pos2(x0, y + 8.0), Align2::LEFT_CENTER, tr("Finished"), Tokens::semibold(11.5), t.text_dim);
         y += 20.0;
         for r in app.session.job_log.iter().rev().take(20) {
             let col = match r.status.as_str() {
@@ -378,5 +394,90 @@ pub fn progress(app: &mut EffectcraftApp, ui: &mut egui::Ui, rect: Rect) {
                 break;
             }
         }
+    }
+}
+
+/// A job's progress bar (`frac` 0…1).
+fn progress_bar(p: &egui::Painter, bar: Rect, frac: f32, t: &Tokens) {
+    p.rect_filled(bar, 3.0, t.field_bg);
+    p.rect_filled(Rect::from_min_size(bar.min, vec2(bar.width() * frac.clamp(0.0, 1.0), bar.height())), 3.0, t.accent);
+}
+
+/// The Importing card, bottom left over the panels while files import in the background (dropped
+/// or picked in the Import dialog): the file being read, how many are left, and Cancel (#270).
+/// Returns the height it takes, so toasts sit above it.
+pub fn import_card(app: &mut EffectcraftApp, ui: &mut egui::Ui, full: Rect) -> f32 {
+    if app.session.tasks.is_empty() {
+        return 0.0;
+    }
+    let t = app.tokens;
+    let w = 320.0_f32.min(full.width() - 32.0).max(120.0);
+    let mut bottom = full.max.y - 16.0;
+    for j in app.session.jobs().into_iter().filter(|j| j.kind == "import" && j.running) {
+        let r = Rect::from_min_max(pos2(full.min.x + 16.0, bottom - 56.0), pos2(full.min.x + 16.0 + w, bottom));
+        let p = ui.painter();
+        p.rect_filled(r, 6.0, t.panel_bg);
+        p.rect_stroke(r, 6.0, Stroke::new(1.0, t.field_border), egui::StrokeKind::Inside);
+        let x0 = r.min.x + 12.0;
+        let inner = w - 24.0;
+        widgets::text_fit(p, pos2(x0, r.min.y + 15.0), Align2::LEFT_CENTER, &j.label, Tokens::medium(12.0), inner - 64.0, t.text);
+        widgets::text_fit(p, pos2(x0, r.min.y + 32.0), Align2::LEFT_CENTER, &j.message, Tokens::ui(11.5), inner, t.text_dim);
+        progress_bar(p, Rect::from_min_size(pos2(x0, r.min.y + 42.0), vec2(inner, 6.0)), j.fraction.unwrap_or(0.0) as f32, &t);
+        app.auto.add(&format!("import.job.{}", j.id), r, &j.message);
+        if kit::button(app, ui, Rect::from_min_size(pos2(r.max.x - 68.0, r.min.y + 6.0), vec2(56.0, 18.0)), &format!("import.cancel.{}", j.id), "Cancel", false)
+        {
+            kit::exec(app, "jobs.cancel", json!({"job": j.id}));
+        }
+        bottom = r.min.y - 8.0;
+    }
+    full.max.y - 16.0 - bottom
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[ignore = "Media Browser warm listing cache benchmark"]
+    fn listing_cache_benchmark() {
+        let ctx = egui::Context::default();
+        let entries: Vec<_> = (0..1000)
+            .map(|i| mb::Entry {
+                name: format!("Clip {i:04}.mov"),
+                path: format!("/Shoot/作品 Clip {i:04}.mov"),
+                is_dir: false,
+                size: 1,
+                modified: None,
+                kind: Some("video"),
+            })
+            .collect();
+        let old_id = egui::Id::unique("old-list");
+        let new_id = egui::Id::unique("new-list");
+        ctx.data_mut(|d| {
+            d.insert_temp(old_id, (0.0, Ok::<_, String>(entries.clone())));
+            d.insert_temp(new_id, (0.0, Arc::new(Ok::<_, String>(entries))));
+        });
+        let (_, original) = ctx.data(|d| d.get_temp::<Listing>(new_id)).unwrap();
+        assert_eq!(original.as_ref().as_ref().unwrap()[0].name, "Clip 0000.mov");
+        let mut before = Vec::new();
+        let mut after = Vec::new();
+        for _ in 0..5 {
+            let start = std::time::Instant::now();
+            for _ in 0..1000 {
+                let _ = std::hint::black_box(ctx.data(|d| d.get_temp::<(f64, Result<Vec<mb::Entry>, String>)>(old_id)).unwrap());
+            }
+            before.push(start.elapsed());
+            let start = std::time::Instant::now();
+            for _ in 0..1000 {
+                std::hint::black_box(ctx.data(|d| d.get_temp::<Listing>(new_id)).unwrap());
+            }
+            after.push(start.elapsed());
+        }
+        let (_, cached) = ctx.data(|d| d.get_temp::<Listing>(new_id)).unwrap();
+        assert!(Arc::ptr_eq(&original, &cached));
+        assert_eq!(cached.as_ref().as_ref().unwrap().last().unwrap().name, "Clip 0999.mov");
+        before.sort();
+        after.sort();
+        println!("1,000 Media Browser entries, median per warm cache lookup: {:?} -> {:?}", before[2] / 1000, after[2] / 1000);
     }
 }
