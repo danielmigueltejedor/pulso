@@ -1,20 +1,87 @@
-# Pulso
+<div align="center">
+  <img src="https://raw.githubusercontent.com/danielmigueltejedor/pulso/main/assets/app-icon/hicolor/512x512/apps/ai.storyteller.effectcraft.png" width="176" height="176" alt="Pulso">
+  <h1>Pulso</h1>
+  <p><strong>A compositing and motion graphics tool for the Nodalia suite, built on the EffectCraft engine.</strong></p>
 
-Composición y motion graphics de Nodalix.
+  <p>
+    <img src="https://img.shields.io/badge/status-early%20stage-orange" alt="Early stage">
+    <img src="https://img.shields.io/badge/engine-EffectCraft-6FB312" alt="EffectCraft engine">
+    <img src="https://img.shields.io/badge/Rust-native-dea584?logo=rust&logoColor=black" alt="Native Rust">
+    <img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-2ea44f" alt="MIT OR Apache-2.0">
+  </p>
 
-El motor de este repositorio es el código de [storytold/effectcraft](https://github.com/storytold/effectcraft) en `2fadd14f09bb064cab8f1f8fe85af601a08b6e53`.
-La licencia de ese código se conserva, igual que `NOTICE` y `docs/upstream-readme.md`.
-Pulso es el nombre del producto. El motor puede cambiar sin esperar a upstream.
-Un sync posterior compara commits. No se sustituye este árbol con un reset.
+  <p>
+    <a href="#overview">Overview</a> ·
+    <a href="#what-you-get-today">Today</a> ·
+    <a href="#build-and-run">Build</a> ·
+    <a href="#project-status">Status</a> ·
+    <a href="#keeping-up-with-upstream">Upstream</a> ·
+    <a href="#the-nodalia-suite">Suite</a> ·
+    <a href="#license">License</a>
+  </p>
+</div>
 
-## Compilar
+---
+
+## Overview
+
+**Pulso** is the compositing and motion graphics tool of [Nodalia](https://getnodalia.com). It is built on the engine of
+[EffectCraft](https://github.com/storytold/effectcraft), which lives in this repository and is kept up to
+date with upstream.
+
+> [!IMPORTANT]
+> **Pulso is at an early stage.** What runs today is the upstream application under the Pulso name.
+> Nodalia's own interface is not wired in yet and there are no published builds.
+
+## What you get today
+
+- The EffectCraft engine.
+- A desktop binary called `pulso`.
+- The engine's own feature description, kept as [`docs/upstream-readme.md`](docs/upstream-readme.md).
+
+## Build and run
+
+You need a recent stable Rust toolchain.
 
 ```bash
-cargo run -p effectcraft
+git clone https://github.com/danielmigueltejedor/pulso.git
+cd pulso
+cargo run --release -p effectcraft
 ```
 
-El binario de escritorio se llama `pulso`.
+The desktop binary is called `pulso`.
 
-## Estado
+## Project status
 
-La shell que entra en este import es la de upstream. La interfaz GTK 4 / libadwaita de Nodalix no está cableada todavía. El motor sí está en este repositorio, con sus tests.
+| Area | State |
+|---|---|
+| Engine | Imported from `storytold/effectcraft` and tracked in [`docs/upstream.md`](docs/upstream.md) |
+| Product name | Done: the desktop binary is called `pulso` |
+| App icon | Done: portrait of Eadweard Muybridge |
+| Nodalia interface | Not started |
+| Shared interface resources | Planned: the Nodalia apps will share interface components and styles |
+| Installable packages | None published |
+
+## Keeping up with upstream
+
+[`docs/upstream.md`](docs/upstream.md) records which upstream commit is integrated. Updates are
+merges of upstream's `main`, so Pulso's own changes are kept and conflicts are resolved in the open.
+
+## App icon
+
+Nodalia app icons are black-and-white portraits of historical figures over the app colour.
+Pulso's is Eadweard Muybridge, who studied motion frame by frame. Provenance and licence are in [`assets/app-icon/`](assets/app-icon/).
+
+## The Nodalia suite
+
+Pulso is one of the applications of [Nodalia](https://getnodalia.com), an independent software
+project developed in public by [Daniel Miguel Tejedor](https://danielmigueltejedor.com).
+
+## License
+
+`MIT OR Apache-2.0`, as upstream. The licence files and `NOTICE` of EffectCraft are kept.
+See [`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE).
+
+## Credits
+
+Pulso would not exist without [EffectCraft](https://github.com/storytold/effectcraft) and its contributors.
