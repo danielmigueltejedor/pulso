@@ -1,4 +1,11 @@
 <div align="center">
+  <a href="https://getnodalia.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danielmigueltejedor/nodalia-web/main/assets/brand/nodalia-wordmark-white.svg">
+      <img src="https://raw.githubusercontent.com/danielmigueltejedor/nodalia-web/main/assets/brand/nodalia-wordmark-black.svg" width="150" alt="Nodalia">
+    </picture>
+  </a>
+  <br><br>
   <img src="https://raw.githubusercontent.com/danielmigueltejedor/pulso/main/assets/app-icon/hicolor/512x512/apps/ai.storyteller.effectcraft.png" width="176" height="176" alt="Pulso">
   <h1>Pulso</h1>
   <p><strong>A compositing and motion graphics tool for the Nodalia suite, built on the EffectCraft engine.</strong></p>
