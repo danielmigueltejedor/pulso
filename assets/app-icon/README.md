@@ -1,31 +1,23 @@
-# EffectCraft app icon
+# Pulso app icon
 
-**Creature:** a unicorn, as an engraved head-and-shoulders bust looking out of the tile.
+**Figure:** Eadweard Muybridge. He studied motion frame by frame, which is what a motion graphics tool does.
 
-**Style:** an ink engraving portrait in the Crafting Apps' owl-template framing (the FilmCraft owl):
-full-bleed colour field, tight head-and-shoulders crop, the body running off the bottom and right edges.
+**Style:** a black-and-white portrait cut out over a full-bleed colour field, head and shoulders, in
+the Nodalia icon family (one historical figure per app, one colour per app).
 
 **Tile:** 512 × 512 viewBox, rounded square `rx=112`, clipped; no border or roundel.
 
-**Palette** (exactly three colours):
-
-| Colour | Hex | Used for |
-|---|---|---|
-| App colour (EffectCraft pink) | `#e0368f` | the full-bleed field |
-| Paper | `#efe9dc` | the figure |
-| Ink | `#0b0b0c` | line work and contour |
-
-**Provenance:** the project owner drew it in ArtCraft (a 2880 px engraving-style image, kept in
-craftrules at `assets/app-icons/effectcraft/source.png`). It was vectorised with craftrules
-`assets/logo-options/_tools/vectorize_tile.py`, which keys out the field and traces the ink with potrace.
-Licence: see [LICENSE.txt](LICENSE.txt) (MIT OR Apache-2.0, like the repo).
+**Provenance:** the portrait is "Portrait of Eadweard Muybridge, pioneer of early action photography.png" from
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Portrait_of_Eadweard_Muybridge,_pioneer_of_early_action_photography.png) (public domain). The figure was separated from its
+background, converted to black and white and placed over the app colour.
+Licence: see [LICENSE.txt](LICENSE.txt).
 
 ## Files
 
 | File | What |
 |---|---|
-| `effectcraft.svg` | master vector, traced at 2048 px (canonical) |
-| `effectcraft-small.svg` | lighter vector (~350 KB), traced at 1024 px; also the web favicon |
+| `effectcraft.svg` | master: the portrait as a 1024 px image embedded in an SVG with the tile clip (canonical) |
+| `effectcraft-small.svg` | lighter 512 px version; also the scalable Linux icon and the web favicon where there is one |
 | `effectcraft-1024.png` | 1024 px render |
 | `effectcraft-macos-512.png` | runtime Dock icon on macOS, on Apple's 824/1024 grid |
 | `effectcraft.icns` | macOS icon (Apple grid) |
@@ -37,6 +29,7 @@ App ID: `ai.storyteller.effectcraft` (Wayland app ID, `packaging/linux/ai.storyt
 
 ## Regenerate
 
-Copy a new `icon-master.svg` / `icon.svg` from craftrules `assets/app-icons/effectcraft/` over
-`effectcraft.svg` / `effectcraft-small.svg`, then run `packaging/icons.sh` (needs `resvg`; `iconutil`
-on macOS for the `.icns`). Copy `effectcraft-small.svg` to `apps/effectcraft-web/web/favicon.svg` too.
+The icon is a raster portrait, so the SVG files embed an image instead of traced paths. The
+derived files in this directory were rendered directly from the portrait. `packaging/icons.sh`
+still works on `effectcraft.svg` (resvg renders embedded images), but its output will differ slightly
+from the committed files in resampling.
