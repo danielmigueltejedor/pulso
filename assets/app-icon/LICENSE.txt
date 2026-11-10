@@ -1,13 +1,16 @@
-EffectCraft app icon (effectcraft.svg, effectcraft-small.svg and every file derived from them in
-this directory: effectcraft-1024.png, effectcraft-macos-512.png, effectcraft.icns, effectcraft.ico,
-hicolor/), and the web favicon apps/effectcraft-web/web/favicon.svg.
+Pulso app icon (effectcraft.svg, effectcraft-small.svg and every file derived from them in this
+directory, and the web favicon where the project has one).
 
-Original artwork made for this project by the project owner in ArtCraft, then vectorised (no
-third-party material). Licensed like the rest of EffectCraft, under either of
+The icon is a portrait of Eadweard Muybridge cut out, converted to black and white and placed over the
+app colour. It belongs to the Nodalia icon family: one historical figure per app.
+
+Source portrait: "Portrait of Eadweard Muybridge, pioneer of early action photography.png", from Wikimedia Commons
+(https://commons.wikimedia.org/wiki/File:Portrait_of_Eadweard_Muybridge,_pioneer_of_early_action_photography.png).
+Status of the source: public domain.
+
+The derived icon is licensed like the rest of the project, under either of
 
   * Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
   * MIT license (https://opensource.org/licenses/MIT)
 
 at your option.
-
-Regenerate the derived files with packaging/icons.sh.
