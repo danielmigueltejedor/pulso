@@ -159,7 +159,8 @@ pub struct PreviewPreset {
     pub pre_roll: f64,
     pub post_roll: f64,
     pub play_from: PlayFrom,
-    /// Frames per second; `None` = Auto (the comp's rate).
+    /// Composition frames played per second; `None` = Auto (the comp's rate).
+    /// An override changes preview speed, including the audio's speed and pitch.
     pub frame_rate: Option<f64>,
     /// Frames skipped between the frames played (0 = every frame).
     pub skip: u32,
@@ -205,9 +206,8 @@ impl PreviewPreset {
     pub fn default_for(s: PreviewShortcut) -> Self {
         let d = PreviewPreset::default();
         match s {
-            PreviewShortcut::Spacebar => d,
-            // A lighter preview: every other frame.
-            PreviewShortcut::ShiftSpacebar => PreviewPreset { skip: 1, ..d },
+            // Frame skipping is off by default; set Skip to play fewer frames.
+            PreviewShortcut::Spacebar | PreviewShortcut::ShiftSpacebar => d,
             PreviewShortcut::Numpad0 => PreviewPreset { range: PreviewRange::WorkArea, play_from: PlayFrom::RangeStart, ..d },
             PreviewShortcut::ShiftNumpad0 => {
                 PreviewPreset { range: PreviewRange::WorkArea, play_from: PlayFrom::RangeStart, skip: 1, resolution: PreviewResolution::Half, ..d }
@@ -507,6 +507,13 @@ mod tests {
         assert_eq!(pl.frame_after(237, 1), Some(0));
         let pl = PreviewPlan { looping: false, ..pl };
         assert_eq!(pl.frame_after(237, 1), None);
+    }
+
+    /// #551: Shift+Spacebar used to skip every other frame out of the box.
+    #[test]
+    fn shift_spacebar_plays_every_frame_by_default() {
+        assert_eq!(PreviewPreset::default_for(PreviewShortcut::ShiftSpacebar).skip, 0);
+        assert_eq!(PreviewPreset::default_for(PreviewShortcut::ShiftSpacebar), PreviewPreset::default_for(PreviewShortcut::Spacebar));
     }
 
     #[test]

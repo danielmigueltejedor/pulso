@@ -20,6 +20,23 @@
     }
     #loading img { width: 56px; height: 56px; }
     #loading .err { color: #ff8a7a; white-space: pre-wrap; max-width: 70ch; pointer-events: auto; }
+    #device-lost {
+      position: absolute; inset: 0; display: flex; flex-direction: column; gap: 10px;
+      align-items: center; justify-content: center; padding: 16px; text-align: center;
+      background: rgb(18 18 18 / 0.85); color: #c8c8c8; font: 14px/1.4 system-ui, sans-serif;
+    }
+    #device-lost strong { color: #e3e3e3; font-size: 16px; }
+    #device-lost p { margin: 0; max-width: 60ch; }
+    #device-lost small { color: #8c8c8c; font-size: 12px; }
+    #device-lost div { display: flex; gap: 8px; }
+    #device-lost button {
+      padding: 6px 14px; border: 1px solid #3a3a3a; border-radius: 4px;
+      background: #232323; color: #e3e3e3; font: inherit; cursor: pointer;
+    }
+    #device-lost button:hover { background: #303030; }
+    #device-lost button:last-child { background: #2d8ceb; border-color: #2d8ceb; }
+    #device-lost button:last-child:hover { background: #4aa0f5; }
+    #device-lost button:disabled { opacity: 0.6; cursor: default; }
   </style>
 </head>
 <body>
@@ -54,7 +71,13 @@
         ...ec.info(),
         crossOriginIsolated: self.crossOriginIsolated,
         webgpu: !!navigator.gpu,
-        serviceWorker: !!(navigator.serviceWorker && navigator.serviceWorker.controller),
+        serviceWorker: (() => {
+          try {
+            return !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+          } catch {
+            return false;
+          }
+        })(),
         load: window.effectcraftLoad,
       }),
       // Browser storage (OPFS / IndexedDB): save without downloading, list, remove, wait for writes.
@@ -66,8 +89,14 @@
       workerFrameCheck: (params) => ec.workerFrameCheck(params ?? {}).then(JSON.parse),
     };
     // Offline start and install (PWA): the service worker caches the app's files.
-    if ("serviceWorker" in navigator && !new URLSearchParams(location.search).has("nosw")) {
-      navigator.serviceWorker.register("sw.js").catch((e) => console.warn("service worker:", e));
+    if (!new URLSearchParams(location.search).has("nosw")) {
+      try {
+        if ("serviceWorker" in navigator && navigator.serviceWorker) {
+          navigator.serviceWorker.register("sw.js").catch((e) => console.warn("service worker:", e));
+        }
+      } catch (e) {
+        console.warn("service worker:", e);
+      }
     }
     try {
       // Compile once: the page and its render workers instantiate the same module.

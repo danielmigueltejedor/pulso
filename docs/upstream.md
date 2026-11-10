@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Upstream | `storytold/effectcraft` |
-| Last observed | `2fadd14f09bb064cab8f1f8fe85af601a08b6e53` |
-| Last evaluated | `2fadd14f09bb064cab8f1f8fe85af601a08b6e53` |
-| Last integrated | `2fadd14f09bb064cab8f1f8fe85af601a08b6e53` imported as the engine baseline |
+| Last observed | `feaa1138d3aa9f5d8c8946fd94b4377d64b45670` |
+| Last evaluated | `feaa1138d3aa9f5d8c8946fd94b4377d64b45670` |
+| Last integrated | `feaa1138d3aa9f5d8c8946fd94b4377d64b45670` merged on 2026-11-10 |
 | Skipped | none in the baseline import |
 | Adapted | desktop binary name `pulso` |
-| Conflicting | none recorded |
+| Conflicting | `README.md` (kept ours), `AGENTS.md` (upstream plus our quality contract) |
 
 Crate names stay as imported so the workspace builds. Public product name is Pulso.
