@@ -59,6 +59,8 @@ modules:
       - install -Dm644 NOTICE /app/share/doc/effectcraft/NOTICE
       - install -Dm755 target/release/effectcraft-cli /app/bin/effectcraft-cli
       - install -Dm644 packaging/linux/ai.storyteller.effectcraft.desktop /app/share/applications/ai.storyteller.effectcraft.desktop
+      # Flatpak only exports icons named after the app ID, so the sandbox keeps the Craft icon name.
+      - sed -i "s/^Icon=.*/Icon=ai.storyteller.effectcraft/" /app/share/applications/ai.storyteller.effectcraft.desktop
       - install -Dm644 packaging/linux/ai.storyteller.effectcraft.mime.xml /app/share/mime/packages/ai.storyteller.effectcraft.xml
       - mkdir -p /app/share/icons && cp -R assets/app-icon/hicolor /app/share/icons/
       - >-
