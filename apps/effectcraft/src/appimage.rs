@@ -10,6 +10,9 @@
 use std::path::{Path, PathBuf};
 
 pub const APP_ID: &str = "ai.storyteller.effectcraft";
+/// The icon's theme name, the Nodalia one, so an icon theme can tell Pulso from the Craft app
+/// that shares its ID. Same as `Icon=` in `packaging/linux/ai.storyteller.effectcraft.desktop`.
+pub const ICON_NAME: &str = "dev.danielmiguelt.Pulso";
 
 /// Marks entries this module wrote (it never touches others).
 const MARKER: &str = "X-EffectCraft-AppImage=true";
@@ -40,7 +43,7 @@ pub fn exec_arg(path: &str) -> String {
 /// The hidden desktop entry for the AppImage at `appimage`.
 pub fn entry(appimage: &str) -> String {
     format!(
-        "[Desktop Entry]\nType=Application\nName=EffectCraft\nComment=Motion graphics and visual effects compositor\nExec={} %F\nIcon={APP_ID}\nTerminal=false\nStartupWMClass={APP_ID}\nNoDisplay=true\n{MARKER}\n",
+        "[Desktop Entry]\nType=Application\nName=EffectCraft\nComment=Motion graphics and visual effects compositor\nExec={} %F\nIcon={ICON_NAME}\nTerminal=false\nStartupWMClass={APP_ID}\nNoDisplay=true\n{MARKER}\n",
         exec_arg(appimage)
     )
 }
@@ -55,7 +58,7 @@ pub fn integrate(appimage: &str, data_home: &Path, data_dirs: &[PathBuf], icon: 
     }
     let path = data_home.join("applications").join(&name);
     let text = entry(appimage);
-    let icon_path = data_home.join("icons/hicolor/256x256/apps").join(format!("{APP_ID}.png"));
+    let icon_path = data_home.join("icons/hicolor/256x256/apps").join(format!("{ICON_NAME}.png"));
     match std::fs::read_to_string(&path) {
         Ok(old) if !old.contains(MARKER) => return Ok(false),
         Ok(old) if old == text && icon_path.exists() => return Ok(false),
@@ -99,7 +102,7 @@ mod tests {
         assert_eq!(exec_arg("/home/a/EffectCraft.AppImage"), "\"/home/a/EffectCraft.AppImage\"");
         assert_eq!(exec_arg("/a b/$x\"y`z\\w%"), "\"/a b/\\\\$x\\\\\"y\\\\`z\\\\\\\\w%%\"");
         let e = entry("/opt/EffectCraft.AppImage");
-        assert!(e.contains("Exec=\"/opt/EffectCraft.AppImage\" %F\n") && e.contains("NoDisplay=true\n") && e.contains("Icon=ai.storyteller.effectcraft\n"));
+        assert!(e.contains("Exec=\"/opt/EffectCraft.AppImage\" %F\n") && e.contains("NoDisplay=true\n") && e.contains("Icon=dev.danielmiguelt.Pulso\n"));
     }
 
     #[test]
@@ -108,7 +111,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
         let (home, system) = (root.join("home"), root.join("system"));
         let entry_path = home.join("applications/ai.storyteller.effectcraft.desktop");
-        let icon_path = home.join("icons/hicolor/256x256/apps/ai.storyteller.effectcraft.png");
+        let icon_path = home.join("icons/hicolor/256x256/apps/dev.danielmiguelt.Pulso.png");
         // First start: entry and icon written; again: nothing to do.
         assert!(integrate("/a/EffectCraft.AppImage", &home, std::slice::from_ref(&system), b"png").unwrap());
         assert_eq!(std::fs::read(&icon_path).unwrap(), b"png");
