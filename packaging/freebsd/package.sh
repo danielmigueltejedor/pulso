@@ -98,7 +98,7 @@ sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$EFFECTCRAFT_BUILD_DATE/g" \
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/share/icons/"
 
 # The .desktop names the icon dev.danielmiguelt.Pulso (the Nodalia name); install it under that name too.
-for f in "$STAGE"/share/icons/hicolor/*/apps/"$APP_ID".*; do cp "$f" "${f%/*}/dev.danielmiguelt.Pulso.${f##*.}"; done
+for f in "$STAGE"/share/icons/hicolor/*/apps/"$APP_ID".{png,svg}; do cp "$f" "${f%/*}/dev.danielmiguelt.Pulso.${f##*.}"; done
 copy_docs "$STAGE/share/doc/effectcraft"
 for f in NOTICE ATTRIBUTION.md; do
   if [[ -f "$ROOT/$f" ]]; then install -m 644 "$ROOT/$f" "$STAGE/share/doc/effectcraft/"; fi

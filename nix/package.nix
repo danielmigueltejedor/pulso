@@ -148,7 +148,12 @@ rustPlatform.buildRustPackage {
     # Desktop integration: byte-for-byte the files the .deb/.rpm/.AppImage install.
     install -Dm644 packaging/linux/${appId}.desktop $out/share/applications/${appId}.desktop
     install -Dm644 packaging/linux/${appId}.mime.xml $out/share/mime/packages/${appId}.xml
+    mkdir -p $out/share/icons
     cp -r assets/app-icon/hicolor $out/share/icons/
+    # The .desktop file's Icon= is the Nodalia name, so the icons are installed under it too.
+    for f in $out/share/icons/hicolor/*/apps/${appId}.{png,svg}; do
+      cp "$f" "''${f%/*}/dev.danielmiguelt.Pulso.''${f##*.}"
+    done
     install -d $out/share/metainfo
     substitute packaging/linux/${appId}.metainfo.xml.in \
       $out/share/metainfo/${appId}.metainfo.xml \
