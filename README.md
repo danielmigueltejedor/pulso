@@ -42,6 +42,8 @@ date with upstream.
 
 ## What you get today
 
+Pulso ships 308 effects.
+
 - The EffectCraft engine.
 - A desktop binary called `pulso`.
 - The engine's own feature description, kept as [`docs/upstream-readme.md`](docs/upstream-readme.md).
