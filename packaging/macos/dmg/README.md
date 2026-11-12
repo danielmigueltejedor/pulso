@@ -7,7 +7,7 @@ and the layout into the image, so no bitmap is committed. The DMG still builds w
 
 | File | What |
 |---|---|
-| `background.svg` | Source of the background: the app icon (`assets/app-icon/effectcraft.svg`, linked, not copied) cropped as a cover on the Pulso colour field (`#e0368f`), Ink and Paper. Its text (Inter, JetBrains Mono) is outlined, so rendering it needs no fonts. `package.sh` renders it with [resvg](https://github.com/linebender/resvg) 0.48.1 at 1x (660 × 400 px) and 2x (1320 × 800 px) and joins both into `.background/background.tiff` (`tiffutil -cathidpicheck`); `release.yml` installs that resvg on the macOS runner. |
+| `background.svg` | Source of the background, drawn by `tools/dmg-background/draw_background.py` in [nodalia-design](https://github.com/getnodalia/nodalia-design): two Nodalia islands on the window colour, the left one in the Pulso colour (`#7CC23A`) with a flat picture of what Pulso does, the right one white under the icons. Its text (Sora) is outlined, so rendering it needs no fonts. `package.sh` renders it with [resvg](https://github.com/linebender/resvg) 0.48.1 at 1x (660 × 400 px) and 2x (1320 × 800 px) and joins both into `.background/background.tiff` (`tiffutil -cathidpicheck`); `release.yml` installs that resvg on the macOS runner. |
 | `dmg-layout.DS_Store` | Finder's view settings for the volume: window size, icon size 128, Pulso.app at (326, 205), `Applications` at (574, 205), and the background. Goes to `.DS_Store` in the image; named so it isn't mistaken for (or ignored like) a Finder-generated `.DS_Store`. |
 | `generate.py` | Writes `dmg-layout.DS_Store` from the layout above. |
 
@@ -21,7 +21,7 @@ The DMG file name (`effectcraft-<version>-macos-<arch>.dmg`) still carries the v
 ## Rules
 
 - **Finder draws the icon labels in black in light and dark mode** when a window has a background,
-  so the area under both icons stays light (Paper).
+  so the area under both icons stays light (the white island).
 - **Nothing goes inside the icon boxes:** artwork keeps 10 pt clear of each 128 pt icon box and of
   the label strip under it.
 
