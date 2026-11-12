@@ -7,7 +7,7 @@ Renaming a file breaks links, so add the old path to `redirect_from` when you re
 
 ## Who reads this
 
-Artists using EffectCraft, Discord mods answering them, and AI assistants looking things up for
+Artists using Pulso, Discord mods answering them, and AI assistants looking things up for
 either. Write for an artist, not a developer.
 
 ## Page rules
@@ -16,9 +16,9 @@ either. Write for an artist, not a developer.
 - Plain words, short sentences, numbered steps for anything the reader does.
 - Start the body at `##`. The page title comes from frontmatter.
 - Link to other pages instead of repeating them. Use relative links to the `.md` file:
-  `[Install EffectCraft](../getting-started/install.md)`.
+  `[Install Pulso](../getting-started/install.md)`.
 - No marketing copy, no "simply", no claims you have not checked in the code, a release or an issue.
-- Call the product "EffectCraft", as the app, its downloads and getartcraft.com do.
+- Call the product "Pulso", as the app, its downloads and getartcraft.com do.
 - Name UI labels exactly as the app shows them, in **bold**. Menu paths use the menu text from
   `crates/engine/src/menus.rs`.
 - Shortcuts: the code writes `Cmd`, which is Ctrl on Windows and Linux. Write Ctrl for Windows.
@@ -29,7 +29,7 @@ either. Write for an artist, not a developer.
 ## Frontmatter
 
     ---
-    title: EffectCraft does not use my graphics card
+    title: Pulso does not use my graphics card
     description: One sentence for search results, link previews and AI summaries.
     order: 10                 # optional, sorts within the folder (lower first)
     verified: 0.8.0           # optional, app version you last checked this page against

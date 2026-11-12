@@ -1,6 +1,6 @@
 ---
 title: Footage is missing or offline
-description: Find missing footage in an EffectCraft project, relink it to a folder or replace it with another file.
+description: Find missing footage in an Pulso project, relink it to a folder or replace it with another file.
 order: 20
 verified: 0.9.2
 ---
@@ -12,12 +12,12 @@ Shortcuts on this page use Ctrl. On macOS, use Cmd instead of Ctrl and Option in
 ## Symptoms
 
 - A footage item in the Project panel is flagged as missing after you open a project.
-- EffectCraft shows a message that footage items are missing.
+- Pulso shows a message that footage items are missing.
 
 ## Fix
 
-1. Choose **File ▸ Dependencies ▸ Find Missing Footage**. EffectCraft selects every missing item in the Project panel and shows how many it found.
-2. Choose **File ▸ Dependencies ▸ Relink Missing Footage...** and pick the folder that holds your files. EffectCraft searches that folder and its subfolders.
+1. Choose **File ▸ Dependencies ▸ Find Missing Footage**. Pulso selects every missing item in the Project panel and shows how many it found.
+2. Choose **File ▸ Dependencies ▸ Relink Missing Footage...** and pick the folder that holds your files. Pulso searches that folder and its subfolders.
 3. It relinks files whose names are unique and whose type, dimensions and codec match what the project saved. The whole relink is one undo step.
 4. For anything left over, select the item and choose **File ▸ Replace Footage ▸ File...** (Ctrl+H), then pick the file yourself. This also covers files with duplicate names in the folder, which Relink leaves alone.
 5. After you copy or render files into a folder, choose **File ▸ Reload Footage** (Ctrl+Alt+L) to read them again.

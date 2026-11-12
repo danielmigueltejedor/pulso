@@ -1,10 +1,10 @@
-# EffectCraft Roadmap
+# Pulso Roadmap
 
 **Stage: alpha** · next: beta, ~30 points of "ready for real work" and ~350–620 h away
 
 > **Last reviewed:** 2026-10-22 · **Last updated:** 2026-11-05 · **Change:** minor (ProRes alpha final-run conformance; previously: features of 30 October in the progress log: text Line Join, Timeline drag-reorder and multi-select of effects, viewer edge pan, ScriptUI drag capture and dock size; previously: localization recount after #1774) · **Target:** Adobe After Effects 2026 (26.5.0.89)
 
-EffectCraft aims to do what After Effects does, with the same panels, menus and behaviour, written
+Pulso aims to do what After Effects does, with the same panels, menus and behaviour, written
 from scratch in Rust. This page is the one-page summary; the evidence is in
 [docs/target-app-parity.md](docs/target-app-parity.md), the work list in
 [docs/gaps.md](docs/gaps.md), and the plan in [docs/roadmap.md](docs/roadmap.md).
@@ -118,7 +118,7 @@ Come tell us what matters most to you on [Discord](https://discord.gg/artcraft).
 ## Progress log
 
 - 2026-11-05: ProRes 4444 and XQ exports write the required run after the final alpha
-  difference. The FilmCraft encoder pin fixes alpha movies rejected by native macOS
+  difference. The Toma encoder pin fixes alpha movies rejected by native macOS
   decoding; an export regression checks the stored bytes for both profiles, alpha modes,
   and motion-blur settings (#293). Resolve itself still needs confirmation.
 - 2026-10-30: Text strokes take a Line Join (Miter, Round or Bevel) in the Character panel,

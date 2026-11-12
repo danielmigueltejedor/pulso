@@ -6,7 +6,7 @@ What `crates/aep` ([`effectcraft-aep`](../crates/aep/README.md)) reads and write
 for each statement. Everything here was observed on project files we generated ourselves; no
 source code, specification or format documentation of any other reader was used (every layout is
 backed by our own cases, see section 5). This is the container and a set of
-verified field layouts, not a project importer: turning a parsed `.aep` into an EffectCraft
+verified field layouts, not a project importer: turning a parsed `.aep` into an Pulso
 document is done by the `import` module of the same crate, see [aep-import.md](aep-import.md) (status and
 gaps: [gaps.md](gaps.md) G4 and [file-format-parity.md](file-format-parity.md)).
 
@@ -571,7 +571,7 @@ data layouts, read from default instances only):**
 EXtractoR's Channel Info is the plug-in's own **little-endian** layout: `u32` 1 and 28 bytes, then
 four 164-byte records (Red, Green, Blue, Alpha), each a kind in byte 0 (1 a channel of the footage by
 name: `R`, `G`, `B` by default; 2 the input's own channel, named `(copy)`: Alpha by default) and the
-channel name NUL-terminated from record byte 35. EffectCraft imports kind 2 as its EXtractoR's `(copy)`,
+channel name NUL-terminated from record byte 35. Pulso imports kind 2 as its EXtractoR's `(copy)`,
 the effect input's channel of the same position as earlier effects left it, not as `A` (which names
 an OpenEXR footage's own alpha plane). The rest is not read: it differs between instances
 with the same channels (uninitialised-looking values, also in bytes 1..4 of a record: `02 00 00 32`
@@ -734,7 +734,7 @@ Density, Mesh Rotation Refinement and the Puppet Engine are **?**, and so is whi
 `parT` parameters; whether After Effects stores some `parT` parameters of a fresh Puppet even at
 their defaults (the importer would then report them every time) is **?**; whether a Puppet
 without pins has an (empty) Mesh Group, or no ARAP group at all, is **?**. The importer
-(`import/puppet.rs`) therefore brings the effect in as EffectCraft's Puppet without meshes or
+(`import/puppet.rs`) therefore brings the effect in as Pulso's Puppet without meshes or
 pins and reports, per mesh, Triangles, Expansion and per pin group the pins, how many are keyed
 or carry an expression, and their atom match names; every entry outside this tree is named in the
 report. The sample that settles it: a fresh Puppet with no pins in one composition and, in
@@ -892,7 +892,7 @@ groups as on other layers, with these conventions:
 
 | What | Path | Stored | Evidence | Conf. |
 |---|---|---|---|---|
-| camera Position, default (auto state) | `ADBE Transform Group/ADBE Position`, `tdb4` 76 and 77 = 1 although no expression exists | `[0, 0, -2666.67]` (x and y are 0 whatever the composition size; z = -zoom). A **one-node** camera reports `[0, 0, -2666.67]` (251). **Correction (S16): a reopened two-node camera reports `[0, 0, -2666.67]` too (256 read back), and After Effects renders it there**: the default two-node camera of 537 above the 3D solid of 486 renders from `[0, 0, -2666.67]` towards the point of interest, not like the composition's default view (537 differs from 486 in 24 % of the grid points, and EffectCraft's import with the stored position matches 537 but for 4 edge points). The `[960, 540, ...]` of the batch-3 notes was not reproduced (535 and 537, created by script, read back the stored value too); `CameraPosition::reported` keeps the old rule and is marked as contradicted | 256, 251, 537 | V |
+| camera Position, default (auto state) | `ADBE Transform Group/ADBE Position`, `tdb4` 76 and 77 = 1 although no expression exists | `[0, 0, -2666.67]` (x and y are 0 whatever the composition size; z = -zoom). A **one-node** camera reports `[0, 0, -2666.67]` (251). **Correction (S16): a reopened two-node camera reports `[0, 0, -2666.67]` too (256 read back), and After Effects renders it there**: the default two-node camera of 537 above the 3D solid of 486 renders from `[0, 0, -2666.67]` towards the point of interest, not like the composition's default view (537 differs from 486 in 24 % of the grid points, and Pulso's import with the stored position matches 537 but for 4 edge points). The `[960, 540, ...]` of the batch-3 notes was not reproduced (535 and 537, created by script, read back the stored value too); `CameraPosition::reported` keeps the old rule and is marked as contradicted | 256, 251, 537 | V |
 | camera Position, set by the user | same, `tdb4` 76 and 77 = 0 | the absolute value `[100, 200, -1000]` | 253 | V |
 | camera point of interest | `ADBE Anchor Point` | `[960, 540, 0]` in **pixels** (not a fraction); the record's `tdsb` is 1 on a two-node and 3 on the one-node camera (not asserted) | 251, 253, 256 | V (value), E (`tdsb`) |
 | light Position, default | same as the camera | `[0, 0, -1333.33]`, as After Effects reports it (255 read back); the point of interest `[960, 540, 0]` | 254, 255 | V |
@@ -916,7 +916,7 @@ composition only), `Layer::orientation` (`Orientation`; test `orientation_is_ots
 `tests/batch5.rs`). Render checks against After Effects (20 px grid, 5 184 points): 486 1 point
 off, 535 2, 536 0, 537 4 (anti-aliased edges); **488 (Orientation `[10, 20, 30]`): 272 points
 (5.25 %) differ; the import carries the stored angles, and permuted or negated inputs match worse
-(6.2 % to 34 %), so the cause is in EffectCraft's renderer and not isolated.** Tests: `tests/layer_switches.rs`, `tests/batch3_objects.rs`.
+(6.2 % to 34 %), so the cause is in Pulso's renderer and not isolated.** Tests: `tests/layer_switches.rs`, `tests/batch3_objects.rs`.
 
 ### 3.12a Project settings (top-level chunks; cases 620-634)
 

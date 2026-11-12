@@ -1,8 +1,8 @@
 ---
 title: FAQ
-description: Short answers about EffectCraft.
+description: Short answers about Pulso.
 order: 40
 ---
 
-- [Can EffectCraft open After Effects projects?](after-effects-projects.md)
-- [Is EffectCraft free, and where does it run?](price-and-platforms.md)
+- [Can Pulso open After Effects projects?](after-effects-projects.md)
+- [Is Pulso free, and where does it run?](price-and-platforms.md)

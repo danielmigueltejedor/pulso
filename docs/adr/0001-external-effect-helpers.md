@@ -9,7 +9,7 @@
 People want to use effects that already exist as native plug-ins: OpenFX suites (Sapphire,
 ReelSmart Motion Blur, Twixtor, ...) and, later, other native formats. storytold/effectcraft#508
 hosted OpenFX in-process. That needs `unsafe` to call a C ABI and runs closed-source native
-code in EffectCraft's own process, which conflicts with two non-negotiables:
+code in Pulso's own process, which conflicts with two non-negotiables:
 
 - **Never crash** (AGENTS.md): one null dereference in a third-party plug-in takes the whole
   app, and the user's unsaved work, down with it. `catch_unwind` can't catch a segfault, and a
@@ -18,8 +18,8 @@ code in EffectCraft's own process, which conflicts with two non-negotiables:
 
 ## Decision
 
-EffectCraft never loads native plug-in code into its own process. Native effects are served by
-**external effect helpers**: separate programs that EffectCraft starts as child processes and
+Pulso never loads native plug-in code into its own process. Native effects are served by
+**external effect helpers**: separate programs that Pulso starts as child processes and
 talks to over a small, versioned protocol. The core gains one generic, safe-Rust crate,
 `effectcraft-helper-host` (L3); format-specific hosts (OpenFX, ...) live in helper programs
 that are built, released and installed separately.
@@ -38,11 +38,11 @@ that are built, released and installed separately.
   temp folder elsewhere) addressed by offsets, never through the pipe. Callbacks (`input_at`,
   `layer_input`, `params_at`) let temporal effects (motion blur, retiming) read other frames
   while rendering; nested renders through the same helper are supported.
-- **Discovery.** EffectCraft looks in `helpers/` next to the executable (and
+- **Discovery.** Pulso looks in `helpers/` next to the executable (and
   `Contents/Helpers` in a macOS bundle), `helpers/` in the settings folder, and
   `EFFECTCRAFT_HELPER_PATH`. Helper programs are named `effectcraft-helper-*`.
 - **Security.** Helpers are local programs the user installed, just like the plug-ins they host.
-  EffectCraft runs only programs from those locations, passes them nothing beyond the protocol
+  Pulso runs only programs from those locations, passes them nothing beyond the protocol
   (no network, no project files), and runs no helper on the web build.
 
 ## Alternatives considered
@@ -53,7 +53,7 @@ that are built, released and installed separately.
   (and differ per OS), so a helper written in C++ against the OpenFX reference host couldn't
   speak it. The chosen transport, JSON lines plus a plain file, works from any language without
   a library.
-- **Memory-mapped shared memory on the EffectCraft side.** Mapping needs `unsafe` (or a crate
+- **Memory-mapped shared memory on the Pulso side.** Mapping needs `unsafe` (or a crate
   whose safe API is unsound if the other process truncates the mapping). Positional reads and
   writes on a file in the page cache cost one copy per frame each way and stay safe. A helper is
   free to map the file.

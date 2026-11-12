@@ -1,6 +1,6 @@
-# Driving EffectCraft from agents
+# Driving Pulso from agents
 
-Everything in EffectCraft is an engine command with a stable id and JSON params. Menus, shortcuts,
+Everything in Pulso is an engine command with a stable id and JSON params. Menus, shortcuts,
 panel gestures, the CLI, the control channel and MCP all go through the same commands, so anything a
 user can do, an agent can do too. There are three ways in:
 
@@ -58,13 +58,13 @@ The release packages ship `effectcraft-cli` alongside the desktop app, so no bui
 
 | Install | CLI |
 |---|---|
-| Windows (MSI) | `%LOCALAPPDATA%\Programs\ArtCraft\EffectCraft\effectcraft-cli.exe` by default (`C:\Program Files\ArtCraft\EffectCraft\effectcraft-cli.exe` for an all-users install, under `Program Files (x86)` instead for the 32-bit build, or wherever you installed it otherwise), not on `PATH` |
+| Windows (MSI) | `%LOCALAPPDATA%\Programs\ArtCraft\Pulso\effectcraft-cli.exe` by default (`C:\Program Files\ArtCraft\Pulso\effectcraft-cli.exe` for an all-users install, under `Program Files (x86)` instead for the 32-bit build, or wherever you installed it otherwise), not on `PATH` |
 | Linux (deb, rpm) | `/usr/bin/effectcraft-cli` |
 | macOS | the separate `effectcraft-cli-<version>-macos-<arch>.zip` release asset (the `.app` holds only the desktop app) |
 
 ```sh
 # Windows (PowerShell), default install folder
-claude mcp add effectcraft -- "$env:LOCALAPPDATA\Programs\ArtCraft\EffectCraft\effectcraft-cli.exe" mcp
+claude mcp add effectcraft -- "$env:LOCALAPPDATA\Programs\ArtCraft\Pulso\effectcraft-cli.exe" mcp
 # Linux, or macOS with the CLI unzipped onto PATH
 claude mcp add effectcraft -- effectcraft-cli mcp
 ```
@@ -81,7 +81,7 @@ and transport errors also flush outstanding changes. Queries do not rotate the s
 A failed checkpoint adds a warning to the tool reply; the edit remains in memory and the next
 call retries. Use `save_project {path}` to a writable location before disconnecting if warned.
 
-Each server has its own folder under `<config directory>/EffectCraft Auto-Save/MCP/` (or
+Each server has its own folder under `<config directory>/Pulso Auto-Save/MCP/` (or
 `<custom Auto-Save folder>/MCP/`). The maximum-version setting applies within that folder.
 `--autosave` enables these checkpoints regardless of the desktop's Auto-Save toggle and interval;
 it reads settings without writing desktop preferences, shortcuts or crash-recovery state.
@@ -897,7 +897,7 @@ Where scripts come from:
   saves are not in it; commands a script or `file.runScript` ran are covered by that one step.
   A successful Revert starts a new replay boundary at the saved file it reopened.
 - `help.exportRepro {path?}` saves the same for a bug report, by default to `Repros/` in the
-  settings folder (macOS `~/Library/Application Support/EffectCraft/Repros`, next to `Logs/`).
+  settings folder (macOS `~/Library/Application Support/Pulso/Repros`, next to `Logs/`).
   Confined automation must give an explicit path inside a write root; `journal.export {}`
   remains available because it only returns the script in memory.
 - **Crash repros**: when the last-resort guard catches a panic in a command, the app writes
@@ -945,7 +945,7 @@ composition itself at any zoom.
 ### Effects & Presets
 
 The native Effects & Presets panel's options menu includes **Copy Presets Folder Path**. It copies
-the folder the panel scans: `EC_PRESETS_DIR` when set, otherwise `~/Documents/EffectCraft/Presets`
+the folder the panel scans: `EC_PRESETS_DIR` when set, otherwise `~/Documents/Pulso/Presets`
 using `HOME` or `USERPROFILE`. Relative paths are resolved to an absolute path. The folder may
 not exist yet; this action does not create it.
 Over the live UI control channel, `ui.menu.invoke {"id":"effects.copyPresetsFolderPath"}` copies
