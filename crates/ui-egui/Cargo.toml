@@ -40,7 +40,7 @@ bytemuck = { workspace = true }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # Floating panels open in OS windows of their own on desktop; the web keeps them in the page.
 craft-ui = { workspace = true, features = ["native-windows"] }
-craft-update = { workspace = true }
+nodalia-update = { workspace = true }
 # Waits for the display pass's error scopes (immediately ready on native wgpu).
 pollster = { workspace = true }
 sys-locale = { workspace = true }
