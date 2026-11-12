@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 
 /// Nextest archives relocate binaries; plain Cargo keeps the compile-time path valid.
 fn binary() -> std::ffi::OsString {
-    std::env::var_os("NEXTEST_BIN_EXE_effectcraft").unwrap_or_else(|| env!("CARGO_BIN_EXE_effectcraft").into())
+    std::env::var_os("NEXTEST_BIN_EXE_pulso").unwrap_or_else(|| env!("CARGO_BIN_EXE_pulso").into())
 }
 
 /// A settings folder of its own, so a launch that got past the arguments would show up as
