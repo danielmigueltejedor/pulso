@@ -6,7 +6,7 @@
     </picture>
   </a>
   <br><br>
-  <img src="https://raw.githubusercontent.com/danielmigueltejedor/pulso/main/assets/app-icon/hicolor/512x512/apps/ai.storyteller.effectcraft.png" width="160" alt="Pulso">
+  <img src="https://raw.githubusercontent.com/danielmigueltejedor/pulso/main/assets/app-icon/hicolor/512x512/apps/ai.storyteller.effectcraft.png" width="192" alt="Pulso">
   <h1>Pulso</h1>
   <p><strong>A compositing and motion graphics tool for the Nodalia suite, built on the EffectCraft engine.</strong></p>
 
