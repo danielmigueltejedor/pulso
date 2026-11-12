@@ -11,10 +11,10 @@ rust-version = "1.95"
 repository = "https://github.com/storytold/effectcraft"
 
 [workspace.dependencies]
-craft-pdf = { git = "https://github.com/storytold/craft-libs", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545", version = "=0.1.0", default-features = false, features = ["read"] }
-craft-docpath = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545" }
-craft-quit = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545" }
-craft-ecproj-format = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "ca1b5e2edb8568335c6c14f390307bd5beae8238" }
+craft-pdf = { git = "https://github.com/getnodalia/foundation", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545", version = "=0.1.0", default-features = false, features = ["read"] }
+craft-docpath = { version = "0.1.0", git = "https://github.com/getnodalia/foundation", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545" }
+craft-quit = { version = "0.1.0", git = "https://github.com/getnodalia/foundation", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545" }
+craft-ecproj-format = { version = "0.1.0", git = "https://github.com/getnodalia/foundation", rev = "ca1b5e2edb8568335c6c14f390307bd5beae8238" }
 # In-app updates from this app's GitHub releases, with the update windows for egui.
 nodalia-update = { git = "https://github.com/danielmigueltejedor/nodalia-design", rev = "b2feb66c7f7b516613c4f2c74091baddb5a50f14", features = ["egui"] }
 # internal
@@ -84,29 +84,29 @@ tempfile = "3.27"
 
 # media codecs + containers: FilmCraft's pure-Rust crates, pinned to a revision (plan/adr/0001).
 # Only `crates/media`, `crates/export` and `crates/interchange` may depend on these.
-filmcraft-codecs = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-media = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-frame = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-color = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-time = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-codecs = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-media = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-frame = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-color = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-time = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
 # encoders + muxer (crates/export)
-filmcraft-h264enc = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-prores = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-aac = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-isobmff = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-h264enc = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-prores = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-aac = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-isobmff = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
 # container headers read for AAC channel layouts (crates/media)
-filmcraft-matroska = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-mpegts = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-matroska = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-mpegts = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
 # decoder used as the round-trip oracle of effectcraft-opusenc (crates/export dev-dependency)
-filmcraft-opus = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-vp9 = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-opus = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-vp9 = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
 # decoders used as the round-trip oracles of effectcraft-hevcenc / effectcraft-av1enc (dev-dependencies only)
-filmcraft-hevc = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-av1 = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-hevc = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-av1 = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
 # timeline interchange (EDL, FCP7 XML, FCPXML, OTIO) for Premiere Pro interop (crates/interchange only)
-filmcraft-interchange = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-project = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
-filmcraft-geom = { git = "https://github.com/storytold/filmcraft", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-interchange = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-project = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
+filmcraft-geom = { git = "https://github.com/getnodalia/foundation", rev = "d5ead4ba1ee2f1cd13cb86a4239aee2730a3d9f5" }
 
 # gpu (the same wgpu eframe / egui-wgpu use)
 wgpu = { version = "30.0.1", features = ["fragile-send-sync-non-atomic-wasm"] }
@@ -117,7 +117,7 @@ half = "2.7"
 # ui
 # Shared frontend components; keep this dependency above the engine boundary.
 # Shared UI and the complete egui family select reviewed immutable commits below.
-craft-ui = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545", features = ["serde"] }
+craft-ui = { version = "0.1.0", git = "https://github.com/getnodalia/foundation", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545", features = ["serde"] }
 # `default_fonts` and `monochrome_emoji_fonts` are explicit: the app's `FontDefinitions::default()`
 # and its `✔`/`▣` chrome glyphs need both, and kittest's own dev-dependencies do not propagate.
 egui = { version = "0.37", default-features = false, features = ["default_fonts", "monochrome_emoji_fonts"] }
@@ -131,7 +131,7 @@ cpal = "0.16"
 sys-locale = "0.3"
 
 # Local co-development against a FilmCraft checkout next to this repo: uncomment.
-# [patch."https://github.com/storytold/filmcraft"]
+# [patch."https://github.com/getnodalia/foundation"]
 # filmcraft-codecs = { path = "../filmcraft/crates/codecs" }
 # filmcraft-media = { path = "../filmcraft/crates/media" }
 # filmcraft-frame = { path = "../filmcraft/crates/frame" }
@@ -242,19 +242,23 @@ lto = "thin"
 codegen-units = 1
 
 [patch.crates-io]
-hayro-syntax = { git = "https://github.com/storytold/craft-libs", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545", version = "=0.7.2" }
-hayro-jbig2 = { git = "https://github.com/storytold/craft-libs", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545", version = "=0.3.0" }
-ecolor = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-emath = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-epaint = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-epaint_default_fonts = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-egui = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-egui-winit = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-egui-wgpu = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-egui_glow = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-egui_extras = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-egui_kittest = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
-eframe = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+hayro-syntax = { git = "https://github.com/getnodalia/foundation", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545", version = "=0.7.2" }
+hayro-jbig2 = { git = "https://github.com/getnodalia/foundation", rev = "e11f9d9aebea5f6b8e74643c1ea1ed172ba5f545", version = "=0.3.0" }
+ecolor = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+emath = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+epaint = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+epaint_default_fonts = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui-winit = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui-wgpu = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui_glow = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui_extras = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+egui_kittest = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
+eframe = { git = "https://github.com/getnodalia/foundation", rev = "6d518fc799681571963842f95b55a6b68431b15a" }
 # Patch a crate only together with the dependency that needs it: an unused patch makes the Nix
 # build, which uses vendored sources, fail (`cargo xtask lock-patches`).
-winit = { git = "https://github.com/storytold/winit.git", rev = "a517b3846ee8457d84ee4975110bfda6797c44dc" }
+winit = { git = "https://github.com/getnodalia/foundation", rev = "a517b3846ee8457d84ee4975110bfda6797c44dc" }
+
+# A vendored library still names this by its old home; the same commits are kept in foundation.
+[patch."https://github.com/storytold/craft-libs"]
+craft-media = { git = "https://github.com/getnodalia/foundation", rev = "f0ad6c1e1d297908915f4be315b0fcfc9be7b5d4" }
