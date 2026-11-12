@@ -4,7 +4,7 @@ Related to #1365. This is a naming cleanup, not a trademark clearance or a produ
 
 ## Naming policy
 
-Use short, descriptive labels for EffectCraft implementations. Do not reuse a vendor prefix or
+Use short, descriptive labels for Pulso implementations. Do not reuse a vendor prefix or
 coined feature name as our branding. Qualify similar effects by what distinguishes them; each
 English display name remains unique across the registry.
 

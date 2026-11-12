@@ -2,7 +2,7 @@
 
 > **Last reviewed:** 2026-10-12 · **Last updated:** 2026-10-18 · **Change:** minor (accessibility row, second slice: Info, Flowchart, Script Console and the 3D Camera Tracker block named and keyboard-operable, #1335; earlier changes: accessibility row: an AccessKit audit and a contrast test, three more panels named and keyboard-operable, #1335; shape group Contents row elided; path-editing layer bounds #1220; closed issue references re-audited against `upstream/main` 470ea7a3) · **Target:** Adobe After Effects 2026
 
-How closely EffectCraft's interaction matches After Effects: tools, handles, snapping, nudging,
+How closely Pulso's interaction matches After Effects: tools, handles, snapping, nudging,
 modifier keys, shortcuts, drag behaviour, numeric entry, panels, context menus and feel. Evidence
 is the code at `origin/main` 1446e27, the 42 scripted UI test files in `crates/ui-egui/tests`
 (real pointer and keyboard events, run headless), [fidelity/workflow-checks.md](fidelity/workflow-checks.md)

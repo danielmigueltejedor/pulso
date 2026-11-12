@@ -1,7 +1,7 @@
 # Plug-ins and extensions
 
-EffectCraft's core aims at After Effects parity. What After Effects users get from third parties
-(effect plug-ins, scripts, ScriptUI panels) is an extension in EffectCraft too, and EffectCraft
+Pulso's core aims at After Effects parity. What After Effects users get from third parties
+(effect plug-ins, scripts, ScriptUI panels) is an extension in Pulso too, and Pulso
 offers the same kinds of extension points as After Effects so that anyone can write their own.
 
 ## Extension points compared with After Effects
@@ -9,7 +9,7 @@ offers the same kinds of extension points as After Effects so that anyone can wr
 From After Effects' public documentation (the user guide's scripting pages and the Scripting
 Guide):
 
-| After Effects | EffectCraft | |
+| After Effects | Pulso | |
 |---|---|---|
 | Effect plug-ins (C/C++ SDK, `.aex` / `.plugin`) | [Effect plug-ins](#effect-plug-ins): WebAssembly modules (WebAssembly ABI 1 and 2) or Rust; the `Plug-ins` folder next to the settings loads at start-up | Different ABI: After Effects SDK plug-ins can't run (G8) |
 | Scripts folder: its scripts are listed in File ▸ Scripts | `Scripts/` in the settings folder (File ▸ Scripts ▸ Install Script File… copies a script there), listed in File ▸ Scripts with the bundled samples; a subfolder (one level) is a submenu named after it | Same |
@@ -18,12 +18,12 @@ Guide):
 | ExtendScript preprocessor directives (`#include`, `#target`, `#targetengine`) | `#include` / `//@include` / `#includepath` inline files relative to the script (once each, depth-limited, file gate applies); `#target`, `#targetengine`, `#strict` are ignored | Same |
 | `Scripts/Startup` and `Scripts/Shutdown`: run in alphabetical order when the app starts and quits | `Scripts/Startup/` and `Scripts/Shutdown/` in the settings folder, in alphabetical order (case ignored): the Startup scripts run at launch before a project opens, and the Shutdown scripts run as the desktop app quits, after the project is closed. A Startup script that fails is reported in a toast and in the log, a Shutdown script that fails is reported in the log, and the next script still runs | Partial: each script runs in its own global scope, so variables and functions a Startup script defines are not available to later scripts; a Startup script's modal dialog stays open while the next scripts run and the app starts; a Shutdown script's modal dialogs close as if canceled; the web app runs no Shutdown scripts |
 | `Scripts/ScriptUI Panels`: listed at the bottom of the Window menu, dockable like the app's own panels, `this` is the panel | `Scripts/ScriptUI Panels/` in the settings folder (File ▸ Scripts ▸ Install ScriptUI Panel… copies one there), listed at the bottom of the Window menu (a subfolder, one level, is a submenu named after it), docked like any panel, `this` is the panel; the panels open when the app quits open again at the next launch | Same. Where a panel was docked isn't kept: workspace layouts aren't saved between launches |
-| Keyboard shortcuts for scripts (the Keyboard Shortcuts editor lists the scripts of the Scripts folder) | Edit ▸ Keyboard Shortcuts lists the scripts of File ▸ Scripts under File ▸ Scripts (`file.runScript {"name": "<file name>"}`); a key given to one is saved with the preset, File ▸ Scripts shows it, and pressing it runs the script as its menu entry does | Same. After Effects binds a key to a script's place in the alphabetical list (`ExecuteScriptMenuItem01`…), and EffectCraft binds it to the script's file name. The Window menu entries of ScriptUI panels aren't offered |
+| Keyboard shortcuts for scripts (the Keyboard Shortcuts editor lists the scripts of the Scripts folder) | Edit ▸ Keyboard Shortcuts lists the scripts of File ▸ Scripts under File ▸ Scripts (`file.runScript {"name": "<file name>"}`); a key given to one is saved with the preset, File ▸ Scripts shows it, and pressing it runs the script as its menu entry does | Same. After Effects binds a key to a script's place in the alphabetical list (`ExecuteScriptMenuItem01`…), and Pulso binds it to the script's file name. The Window menu entries of ScriptUI panels aren't offered |
 | Running a script from the command line (`afterfx -r script.jsx`) | `effectcraft-cli script`, the control channel's and MCP's `script.run` | Same purpose, other entry points |
 | `app.settings` (kept in the preferences between sessions) | Kept in `script_settings.json` in the settings folder (`script.settings.get` / `script.settings.save`) | Same |
 | Allow Scripts to Write Files and Access Network | Settings ▸ Scripting & Expressions | Same |
 
-The settings folder is `~/Library/Application Support/EffectCraft` on macOS, `%APPDATA%\EffectCraft`
+The settings folder is `~/Library/Application Support/Pulso` on macOS, `%APPDATA%\Pulso`
 on Windows and `$XDG_CONFIG_HOME/effectcraft` (or `~/.config/effectcraft`) on Linux
 ([preferences.md](preferences.md)); the web app keeps it in browser storage.
 
@@ -57,7 +57,7 @@ A ScriptUI panel is a script that builds its user interface into the panel it is
 Put it in `Scripts/ScriptUI Panels/` in the settings folder (or use File ▸ Scripts ▸ Install
 ScriptUI Panel…) and it is listed at the bottom of the Window menu under its file name; choosing it
 runs the script and docks its panel as a tab, which you can move, float, maximize and close like any
-other panel. Closing the tab closes the panel (its `onClose` runs). Panels open when EffectCraft
+other panel. Closing the tab closes the panel (its `onClose` runs). Panels open when Pulso
 quits open again at the next launch (`window.restoreScriptPanels`, which the desktop and web apps
 run at start-up; the list is `scriptui_panels.json` in the settings folder).
 
@@ -113,7 +113,7 @@ examples.
 
 ## Bundled extensions
 
-Optional tools that ship with EffectCraft but are not part of its core: they are scripts on the
+Optional tools that ship with Pulso but are not part of its core: they are scripts on the
 public scripting API, like the third-party scripts After Effects users install, and are listed
 with the bundled samples (`file.scripts.list` reports them as `extension`). A script of the same
 name in your Scripts folders takes their place.
@@ -152,7 +152,7 @@ example of a keyframe tool.
 
 ## Effect plug-ins
 
-EffectCraft loads third-party effects through a small, versioned plug-in API (**API version 2**; WebAssembly ABI 1 and 2).
+Pulso loads third-party effects through a small, versioned plug-in API (**API version 2**; WebAssembly ABI 1 and 2).
 A plug-in effect behaves exactly like a built-in one: it is listed in Effects & Presets (and the
 Effect menu) under its category, applied by id (`effect.apply {"effect": "org.example.posterize"}`)
 or display name, its parameters are ordinary properties (keyframes, expressions, Effect Controls,
@@ -163,7 +163,7 @@ There are two ways to write one:
 | | WebAssembly plug-in | Rust plug-in |
 |---|---|---|
 | What | a `.wasm` (or `.wat`) module | a type implementing `effectcraft_effects::plugin::EffectPlugin` |
-| Loaded by | Effect ▸ Install Effect Plug-in… (copied into the `Plug-ins` folder next to the settings and loaded on every start-up), Effect ▸ Load Effect Plug-in… / `effect.plugins.load {path \| folder}` (loads in this session only), the `Plug-ins` folder next to the settings at start-up, or `effect.plugins.install {path \| folder}` | `register_plugin(Arc::new(MyEffect))` in an app that links EffectCraft's crates |
+| Loaded by | Effect ▸ Install Effect Plug-in… (copied into the `Plug-ins` folder next to the settings and loaded on every start-up), Effect ▸ Load Effect Plug-in… / `effect.plugins.load {path \| folder}` (loads in this session only), the `Plug-ins` folder next to the settings at start-up, or `effect.plugins.install {path \| folder}` | `register_plugin(Arc::new(MyEffect))` in an app that links Pulso's crates |
 | Sandbox | yes: no imports (no files, clock or network), fuel-limited, at most 1 GiB of memory, deterministic floats | none (it is your code) |
 | Platforms | desktop and CLI (the wasmi interpreter, crate feature `effectcraft-plugin/wasm`); not the web build | everywhere |
 
@@ -195,7 +195,7 @@ Every plug-in describes itself with a JSON manifest:
   "name": "Posterize Bands",
   "category": "Stylize",
   "version": "1.0.0",
-  "author": "EffectCraft contributors",
+  "author": "Pulso contributors",
   "description": "Quantizes luminance into tinted bands.",
   "params": [
     {"id": "levels", "name": "Levels", "type": "slider", "default": 4, "min": 2, "max": 64, "sliderMax": 16, "decimals": 0},
@@ -256,7 +256,7 @@ plain Rust (no dependencies):
 ```sh
 cd examples/plugins/posterize-bands
 cargo build --release --target wasm32-unknown-unknown
-# then, in EffectCraft: Effect ▸ Install Effect Plug-in…
+# then, in Pulso: Effect ▸ Install Effect Plug-in…
 #   → target/wasm32-unknown-unknown/release/posterize_bands.wasm  (copied into Plug-ins, loads on start-up)
 # or in-session only: Effect ▸ Load Effect Plug-in…
 # or headless:
@@ -400,7 +400,7 @@ package can't read files, open the network or crash the app.
   `Library/catalog.json`, so the list works offline.
 * **Restart after removing or updating.** Registered effects can't be unloaded: removing or
   updating a package whose effects are loaded takes effect at the next start, and the list says
-  "Restart EffectCraft to finish".
+  "Restart Pulso to finish".
 * **Preview before installing.** Preview (`library.preview`) downloads the package's module
   (checked against the catalog's size and SHA-256) without installing it, and renders its
   effect in the sandbox on a built-in sample frame with default parameters: 2 seconds at 12 fps,

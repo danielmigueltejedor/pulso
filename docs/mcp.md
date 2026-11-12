@@ -6,7 +6,7 @@ to use the desktop app's control channel. Existing ports are unchanged.
 ## Confining file access
 
 `--automation-read-root DIR` and `--automation-write-root DIR` (each repeatable, as in
-PhotoCraft) confine what the agent can reach: files are read only under a read or write root and
+Lienzo) confine what the agent can reach: files are read only under a read or write root and
 written only under a write root; with no write root nothing is written. Every engine command
 (`execute_command`, `command_run`, each `batch` step) is checked before it runs: its file
 parameters must be absolute paths inside the roots (symbolic links resolved, no `..`), and so must
@@ -20,7 +20,7 @@ roots too: footage outside them shows as missing (#2131). Scripts
 in a batch, and the bridge's UI-driving tools (`ui_click`, `ui_key`, `ui_type`, `ui_drag`,
 `ui_set`, `script_ui`, `control`) are refused while confined. Without the flags nothing changes.
 
-The server provides the same core conventions as FilmCraft #28:
+The server provides the same core conventions as Toma #28:
 
 | Tool | Arguments | Result |
 | --- | --- | --- |
@@ -38,7 +38,7 @@ for the full catalog. Each tool has a title and read-only, destructive, idempote
 open-world hints. Tools with an optional output path are conservatively annotated as file writers.
 
 Unknown top-level tool argument keys return JSON-RPC `-32602` naming the key and accepted
-arguments. EffectCraft already rejects unknown engine command parameters; that behaviour is
+arguments. Pulso already rejects unknown engine command parameters; that behaviour is
 preserved. Tool failures (including escaped panics) return `isError: true`, and so does any JSON
 result with a `failed` count above zero (a `command_batch` / `batch` with a failed step, a
 render whose queue items did not all finish), even though the other steps or items succeeded:

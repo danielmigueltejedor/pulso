@@ -10,7 +10,7 @@ Meta's SAM 2.1 (Apache-2.0 code and checkpoints) has streaming memory built for 
 ## Decisions
 - **D1** A native-only `candle` dependency may enter the workspace, in its own crate (`effectcraft-sam2`), excluded from wasm32.
 - **D2** `effectcraft-sam2` is licensed Apache-2.0 only (it derives from Apache-2.0 Hugging Face `transformers` code); `effectcraft-segment` stays MIT OR Apache-2.0.
-- **D3** Shared candle helpers are vendored with a NOTICE for now; a shared crate with LightCraft can follow.
+- **D3** Shared candle helpers are vendored with a NOTICE for now; a shared crate with Luz can follow.
 - **D4** Weights are never hosted or bundled by us: direct from Hugging Face, a mirror, or a user folder, with the SHA-256 pinned in the registry.
 - **D5** SAM 2 is opt-in at first; it becomes the default for tracking only after the benchmark shows it should.
 - **D6** Hand-written kernels (the MobileSAM way) remain the Phase 6 route for AMD GPUs if candle cannot get there.
