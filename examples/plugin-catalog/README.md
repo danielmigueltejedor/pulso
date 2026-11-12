@@ -1,9 +1,9 @@
-# EffectCraft plug-ins
+# Pulso plug-ins
 
 The community catalog of WebAssembly effect plug-ins for
-[EffectCraft](https://github.com/storytold/effectcraft). The app's Plug-in Library
+[Pulso](https://github.com/storytold/effectcraft). The app's Plug-in Library
 (Settings ▸ Plug-in Library) reads [`index.json`](index.json) from this repository, then
-downloads, checks and installs the packages people pick. Plug-ins run in EffectCraft's sandbox:
+downloads, checks and installs the packages people pick. Plug-ins run in Pulso's sandbox:
 they can't read files, open the network or crash the app.
 
 This repository holds only the catalog. Each plug-in's code and `.wasm` live in its author's
@@ -22,7 +22,7 @@ repository, attached to a GitHub release.
 
 ## Review checklist (maintainers)
 
-CI checks the format, unique ids, each download's size and SHA-256, and that EffectCraft installs
+CI checks the format, unique ids, each download's size and SHA-256, and that Pulso installs
 and loads the package. Before merging, also check:
 
 - [ ] The id is new, stable and names the author (reverse domain style: `io.github.user.name`).
@@ -41,7 +41,7 @@ and loads the package. Before merging, also check:
 
 ## Create this repository from the template
 
-The template lives in EffectCraft at `examples/plugin-catalog/`.
+The template lives in Pulso at `examples/plugin-catalog/`.
 
 1. Create the empty public repository `storytold/effectcraft-plugins` (branch `main`, so the app's
    catalog URL `https://raw.githubusercontent.com/storytold/effectcraft-plugins/main/index.json`

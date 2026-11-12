@@ -1,8 +1,8 @@
-# Where EffectCraft falls short
+# Where Pulso falls short
 
 > **Last reviewed:** 2026-10-12 · **Last updated:** 2026-10-30 · **Change:** minor (gap 25, second slice: Info, Flowchart, Script Console and the 3D Camera Tracker block named, described and keyboard-operable, #1335; earlier change: gap 4 closed: every pull request and push to `main` runs `cargo xtask ci` in CI, #2204; earlier change: gap 25: an AccessKit audit test and a theme contrast test, Effects & Presets, Settings and Render Queue named and keyboard-operable, #1335; earlier change: path-editing layer bounds, #1220; issue, PR and catalog references gap 21: percentage guides and effect colour labels in; earlier change: re-audited against `upstream/main` 470ea7a3; ranked gap list from the 10 October re-measure otherwise unchanged) · **Target:** Adobe After Effects 2026 (26.5.0.89)
 
-An honest assessment of how far EffectCraft is from being a real replacement for After Effects,
+An honest assessment of how far Pulso is from being a real replacement for After Effects,
 and the work that closes the gap. This document is meant for contributors and agents choosing
 what to work on. [target-app-parity.md](target-app-parity.md) holds the numbers and how they were
 measured; the [ROADMAP](../ROADMAP.md) summarises both. Estimates marked "≈" are judgements from
@@ -21,7 +21,7 @@ Substance materials, ACES 2.0, Proportional Scrubbing, paste SVG/AI as shapes…
 animation presets, project and template formats, and hardware encoding.
 
 **Ready for real work ≈ 45%** answers *can someone who uses After Effects for a living do real
-work in EffectCraft?* It is still estimated, not measured. Four things hold it back: projects we
+work in Pulso?* It is still estimated, not measured. Four things hold it back: projects we
 can't open (`.aep`), behaviour nobody has checked against After Effects (one live comparison so
 far: scalar ease, 168 samples), reliability outside macOS, and the third-party plug-ins and
 presets professional projects depend on. It sits higher than the 5 October estimate (30–50%)
@@ -71,7 +71,7 @@ are grouped by area; the issue tracker has the rest.
 | 12 | **3D interaction and depth** | No 3D transform gizmos (#392, #347); camera aperture (#260); reflections (#261); extruded surface materials beyond Front / Bevel / Side / Back Color (fb5a5e9a; #315 closed); #307 reopened (the viewer's renderer button now shows and switches the renderer, #645); Z position (#489) closed | Advanced 3D is After Effects' growth area since 2023 | 20–35 h | G2 · [ui-parity.md](ui-parity.md) |
 | 13 | **3D model formats and materials** | After Effects 26 imports FBX, USD/USDZ, STL besides glTF and OBJ (`usd_plugins`), and Substance 3D materials with mesh displacement (26.0–26.2); we read glTF, OBJ, STL (binary and ASCII, with facet colours) and FBX 7.x (binary and ASCII: meshes, hierarchy, Lambert/Phong materials and textures; no FBX animation or skinning yet) | Product shots and 3D scenes come as FBX/USDZ | 25–45 h | — · [file-format-parity.md](file-format-parity.md) |
 | 14 | **Object Matte** (26.2, disk cache in 26.5) | First slice (#783): the Object Matte effect (Effect ▸ Matte) and `objectMatte.apply` turn a point (and optional box) on a reference frame into a matte and follow the object up to 600 frames each way, or segment every frame on its own; Roto Brush's engine, cache and model (MobileSAM from Settings ▸ Roto Brush, classical graph cut without it). Since then: the Object Matte tool in the viewer (click / drag a box, hover crosshair), the box as the model's box prompt, background tracking with progress and cancel, Freeze, and segmentations kept in the disk cache (26.5). Missing: a comparison with After Effects ([plan](fidelity/object-matte.md)) | The new one-click roto | 10–20 h | G7 · [target-app-parity.md](target-app-parity.md) |
-| 15 | **Hardware video decode and encode** | No VideoToolbox, NVENC, Quick Sync or VA-API; #498 asks for it (answered: CUDA / NVENC need Nvidia's proprietary SDK through FFI, which the no-`unsafe` rule forbids); open PR #819 adds hardware decoding via `filmcraft-platform`; FilmCraft has VideoToolbox / NVENC / VA-API paths to borrow | 4K playback and export speed | 25–45 h | G5/G6 · [hardware-parity.md](hardware-parity.md) |
+| 15 | **Hardware video decode and encode** | No VideoToolbox, NVENC, Quick Sync or VA-API; #498 asks for it (answered: CUDA / NVENC need Nvidia's proprietary SDK through FFI, which the no-`unsafe` rule forbids); open PR #819 adds hardware decoding via `filmcraft-platform`; Toma has VideoToolbox / NVENC / VA-API paths to borrow | 4K playback and export speed | 25–45 h | G5/G6 · [hardware-parity.md](hardware-parity.md) |
 | 16 | **Localization depth** | Menus in 11 languages (ja, zh-hans, zh-hant, uk, es, pt-br, ru, fr, de, cs, ka: 630 rows each, 629 in Georgian); panels in 7 (ja 996 rows, zh-hans 998, zh-hant 951, uk 524, pt-br 695, cs 518, ka 885); effect names translated in Simplified Chinese (308), Traditional Chinese (308, plus 21 categories), Japanese (297) and Georgian (308, plus the generated Effect menu), their ~1,650 parameter names untranslated; Korean and Italian (After Effects ships them) absent; Hangul probe added (#599 closed) | After Effects is used heavily in Japan, China, Korea, Brazil, Europe | 60–110 h + native review | G9 · [localization-parity.md](localization-parity.md) |
 | 17 | **Media Browser lists files import refuses** | The Media Browser, the import and proxy dialogs and `media::is_importable` share one movie list since #1701, AVI included (Targa and Radiance HDR import since #745; DPX and Cineon since #756, log shown as stored unless Interpret Footage ▸ Cineon Settings converts it; MXF OP1a / OP-Atom since #767; AVI since #1701, without DV, MPEG-4 Part 2 or other legacy codecs yet); #431 and #324 closed | Confusing failures on common VFX formats | 15–30 h | G6 · [file-format-parity.md](file-format-parity.md) |
 | 18 | **Relative paths and relinking** | Projects store absolute footage paths; no relink when a project moves | Moving or sharing a project breaks it | 6–12 h | G4 · [file-format-parity.md](file-format-parity.md) |
@@ -96,7 +96,7 @@ The most important missing piece: it turns every other estimate here into a meas
   blend modes, track mattes, each effect at default and at non-default settings, text animators,
   expressions, 3D, motion blur, time remapping.
 - Drive After Effects through ExtendScript (see CLAUDE.md) to record property values at sampled
-  times and render reference frames; render the same projects in EffectCraft headless.
+  times and render reference frames; render the same projects in Pulso headless.
 - Compare values exactly and frames with a perceptual metric; publish a per-feature fidelity
   score and a fidelity column in target-app-parity.md.
 - Clean room: After Effects output stays local in `plan/aftereffects/ref/` (gitignored). Commit
@@ -309,7 +309,7 @@ Issues #41–#47 (all from the Linux AppImage 0.1.1, 5 October): panning the vie
 
 ### G8. Plug-in ecosystem
 
-- After Effects SDK plug-ins cannot run in EffectCraft. Our own WebAssembly plug-in API exists
+- After Effects SDK plug-ins cannot run in Pulso. Our own WebAssembly plug-in API exists
   ([plugins.md](plugins.md)). Grow it: documentation, examples, and original effects that cover
   what the most common third-party plug-ins are used for (particles, glows, 3D objects, sabers).
   Settings ▸ Plug-in Library installs, updates and removes community WebAssembly effects listed
@@ -320,7 +320,7 @@ Issues #41–#47 (all from the Linux AppImage 0.1.1, 5 October): panning the vie
   [ADR 0001](adr/0001-external-effect-helpers.md)): the core gains no native code and no
   `unsafe`, and a crashing plug-in is an error on the effect. The helpers themselves ship
   separately.
-- Features that come from third parties in After Effects are extensions in EffectCraft too, built
+- Features that come from third parties in After Effects are extensions in Pulso too, built
   on the same extension points as After Effects: scripts, ScriptUI panels and effect plug-ins
   ([plugins.md](plugins.md#extension-points-compared-with-after-effects) compares them). ScriptUI
   panels in the user's ScriptUI Panels folder are listed in the Window menu, dock like any panel

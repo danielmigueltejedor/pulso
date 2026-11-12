@@ -1,10 +1,10 @@
 # effectcraft-av1enc
 
-Clean-room, pure-Rust AV1 encoder for EffectCraft's MP4 / WebM export (layer L0, `std` only,
+Clean-room, pure-Rust AV1 encoder for Pulso's MP4 / WebM export (layer L0, `std` only,
 no `unsafe`, builds for `wasm32-unknown-unknown`).
 
 Output is decoded **bit-exactly** by libdav1d (`ffmpeg -c:v libdav1d`, checked in
-`tests/it/ffmpeg_oracle.rs` when ffmpeg is installed) and by FilmCraft's spec-derived
+`tests/it/ffmpeg_oracle.rs` when ffmpeg is installed) and by Toma's spec-derived
 `filmcraft-av1` decoder (`tests/it/roundtrip.rs`): every decoded frame equals the encoder's own
 reconstruction, so prediction never drifts.
 
@@ -64,13 +64,13 @@ reconstruction, so prediction never drifts.
 ## Specification and provenance
 
 Implemented from the **AV1 Bitstream & Decoding Process Specification, version 1.0.0 with
-Errata 1** (AOMediaCodec, 2019; the edition FilmCraft's decoder follows) and the **AV1 Codec
+Errata 1** (AOMediaCodec, 2019; the edition Toma's decoder follows) and the **AV1 Codec
 ISO Media File Format Binding** (v1.2.0) for `av1C`.
 
 The constant tables (default CDFs, scan orders, quantizer lookup tables, interpolation filter
 taps, smooth weights, block / transform size tables, ...) and the decoder-side processes the
 encoder must reproduce exactly (inverse transforms, intra and inter prediction rounding, context
-derivations, motion vector prediction) are mirrored from FilmCraft's first-party, spec-derived
+derivations, motion vector prediction) are mirrored from Toma's first-party, spec-derived
 `filmcraft-av1` decoder (MIT OR Apache-2.0), which is also the round-trip oracle. No source of
 libaom, dav1d, rav1e, SVT-AV1, ffmpeg or any other third-party encoder or decoder was consulted;
 ffmpeg / libdav1d is used only as an external test oracle.

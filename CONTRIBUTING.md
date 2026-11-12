@@ -1,4 +1,4 @@
-# Contributing to EffectCraft
+# Contributing to Pulso
 
 Thanks for helping. Please read [AGENTS.md](AGENTS.md) first: its rules on assets and clean-room
 work apply to everyone, people and AI agents alike, and they are not negotiable.
@@ -55,7 +55,7 @@ cargo +stable-x86_64-pc-windows-gnu run -p effectcraft -- --demo
 An older MinGW earlier on `PATH` can break the build: CodeBlocks' GCC 8.1 fails to link
 `boa_engine` ([#1882](https://github.com/storytold/effectcraft/issues/1882)).
 
-Rust's bundled LLD and self-contained libraries don't include every import library EffectCraft
+Rust's bundled LLD and self-contained libraries don't include every import library Pulso
 needs, so on their own they stop with `unable to find library` for `-lshlwapi`, `-lktmw32`,
 `-lpropsys` and `-lversion` ([#1886](https://github.com/storytold/effectcraft/issues/1886)). To
 link that way, copy those four from mingw-w64 into a folder of its own and add that folder to the

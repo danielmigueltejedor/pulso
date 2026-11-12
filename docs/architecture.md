@@ -2,7 +2,7 @@
 
 > **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-29 · **Change:** minor (SAM 2 crate added to the layer table) · **Target:** Adobe After Effects 2026
 
-EffectCraft is a stack of small Rust crates. The engine knows nothing about the user interface;
+Pulso is a stack of small Rust crates. The engine knows nothing about the user interface;
 the egui frontend, the command-line tool and the MCP server all sit on top of the same `Session`
 and drive it through the same command registry.
 
@@ -35,12 +35,12 @@ cpal or muda. Everything in L0 to L4, the egui UI and the web app also build for
 | L2 | `model` | 3D models for Advanced 3D: glTF 2.0 (`.gltf`/`.glb`) and OBJ/MTL import (meshes, PBR metallic-roughness materials and textures, node hierarchy, skins, animations), parametric primitives, extruded/bevelled outline meshes and polygon triangulation |
 | L2 | `track` | Motion tracking: feature/search region point tracking (pyramid normalized cross-correlation, Lucas–Kanade sub-pixel refinement), confidence, homography/affine/similarity solves |
 | L3 | `render` | Evaluation and compositing: sources, masks, effects, transforms, 3D, motion blur, mattes, blending, layer cache, audio mixdown |
-| L3 | `media` | Footage decoding (FilmCraft's pure-Rust codecs), image sequences, Photoshop and SVG stills, frame cache |
+| L3 | `media` | Footage decoding (Toma's pure-Rust codecs), image sequences, Photoshop and SVG stills, frame cache |
 | L3 | `expr` | The expression engine (JavaScript via boa) with the After Effects object model |
 | L3 | `export` | Render queue encoding: H.264, HEVC and AV1 MP4, ProRes, WebM (VP9 + alpha or AV1, Opus), PNG/JPEG/TIFF/EXR/Targa sequences, GIF, WAV/AIFF |
 | L3 | `gpu` | The GPU compositor and GPU effects on wgpu compute shaders (Metal, Vulkan, Direct3D 12, WebGPU), checked against the CPU renderer |
 | L3 | `sam2` | SAM 2.1 image segmentation and video object tracking for Roto Brush, with candle CPU inference and optional wgpu acceleration; native only, empty on wasm32, with user-installed weights |
-| L3 | `interchange` | Premiere Pro interop through timeline interchange (FCP7 XML, FCPXML, OTIO, EDL, AAF, OMF via FilmCraft's `filmcraft-interchange`): sequences ↔ compositions (§6a) |
+| L3 | `interchange` | Premiere Pro interop through timeline interchange (FCP7 XML, FCPXML, OTIO, EDL, AAF, OMF via Toma's `filmcraft-interchange`): sequences ↔ compositions (§6a) |
 | L3 | `aep` | After Effects projects in one crate (like `lottie`): `container` reads and writes the `.aep` container (RIFX `Egg!`) as a lossless chunk tree with a byte-identical round trip, bounded for hostile input, reads the `.aepx` XML form into the same tree, and has a typed view of items, layers, properties, effects, masks, shapes, text, markers, footage, cameras, lights and layer styles, from our own observations of generated files ([aep-format.md](aep-format.md)); `import` maps the typed view into a project (items, settings, compositions, every layer kind, Transform, keyframes, expressions, masks, text, shapes, cameras, lights, mattes, markers, time remapping, layer styles, the effects of a shared table, footage) with a report of everything not imported ([aep-import.md](aep-import.md)); `export` builds every chunk in code (prototypes in the layout After Effects writes, cloned and edited only at verified fields) for the same scope, with a report of everything not exported, verified by opening the output in After Effects ([aep-export.md](aep-export.md)) |
 | L3 | `lottie` | Lottie JSON / dotLottie import and export (layers, precomps, eased and spatial keyframes, shapes, masks, mattes) with a warnings list for what Lottie cannot express |
 | L3 | `plugin` | Effect plug-ins: loads sandboxed WebAssembly effect modules (WebAssembly ABI v1 and v2, the latter with neighbouring frames; the wasmi interpreter behind the `wasm` feature, on for native hosts) into the effect registry ([plugins.md](plugins.md)) |
@@ -58,7 +58,7 @@ Allowed same-layer edges: `path → keyframe, raster`, `text → path`, `pdf →
 
 The frontend uses `craft-ui::docking` for atomic layout transactions and pointer drop targets,
 and `craft-ui::layout` for bounded split geometry and resize interactions. A small adapter
-preserves EffectCraft's saved dock tree, stacked entries, floating rectangles and dynamic
+preserves Pulso's saved dock tree, stacked entries, floating rectangles and dynamic
 viewer/ScriptUI identities. Tab moves, edge splits, reordering, float/redock, activation and
 close operations use the shared model. The app retains composition-tab behavior, accordion
 height allocation and ScriptUI close callbacks. Lower layers cannot depend on `craft-ui`.
@@ -94,11 +94,11 @@ Everything animatable is a `Property` in the layer's `PropGroup` tree, addressed
 `transform/position`, `effects/#1/blurriness`, `masks/#1/feather`, or by `@uid`. Effects, masks,
 text animators and shape contents are groups in the same tree.
 
-A project file (`.ecproj`) is the project as readable JSON, headed by `savedBy` (the EffectCraft
+A project file (`.ecproj`) is the project as readable JSON, headed by `savedBy` (the Pulso
 version that wrote it) and `schema`; `.ecprojx` is the same data as XML (File ▸ Save a Copy As
 XML). Saving goes through `Project::to_file_json`, which checks that the text reads back before
 anything is written (JSON can't hold NaN or infinity), and files are written atomically. Opening
-a file that a newer EffectCraft saved shows a warning: fields this version doesn't know are
+a file that a newer Pulso saved shows a warning: fields this version doesn't know are
 dropped if it saves the project. Save, Save As, Save a Copy and Increment and Save keep the
 file's format (`.ecprojx` stays XML). Next to `savedBy` the file records the active comp and the
 open comp tabs (`activeComp`, `openComps`), which opening restores; they are editor state, not
@@ -430,7 +430,7 @@ renderer preference; materialized CPU frames remain usable and late GPU textures
 to the preview cache. Scoped allocation failures retain the adaptive budget/CPU retry behavior.
 
 **Recovery boundary:** the host installs handlers through eframe's CreationContext, after egui's
-presentation pipelines but before EffectCraft's pipelines. This does not cover that earlier egui
+presentation pipelines but before Pulso's pipelines. This does not cover that earlier egui
 startup window. eframe 0.37 supports lost-surface recreation, not replacing its live device and
 all presentation resources. Device loss therefore requires restarting the presentation backend;
 CPU compositing alone cannot restore that display. No automatic restart or persistent safe-mode
@@ -713,7 +713,7 @@ The shortcut dispatcher and the menus read the active preset. See
 After Effects' File ▸ Import / Export ▸ Adobe Premiere Pro Project… go through the public
 interchange formats Premiere Pro itself reads and writes, not the native `.prproj` file (it has no
 public specification; supporting it awaits a decision). `crates/interchange` (L3, no file I/O)
-maps FilmCraft's timeline model (`filmcraft-project`, parsed and written by `filmcraft-interchange`,
+maps Toma's timeline model (`filmcraft-project`, parsed and written by `filmcraft-interchange`,
 pinned at the same git revision as the other `filmcraft-*` crates; pure Rust, builds for wasm32)
 to compositions and back:
 
@@ -742,7 +742,7 @@ to compositions and back:
   Premiere Pro Project…", but the file written is Final Cut Pro XML (`.xml`), which Premiere Pro
   imports with File ▸ Import; the dialog says so. FCPXML, OTIO, EDL, AAF and OMF are the other formats.
 
-AAF and OMF (FilmCraft's structured-storage and Bento readers/writers) import and export too;
+AAF and OMF (Toma's structured-storage and Bento readers/writers) import and export too;
 media embedded in them is not extracted, and the AAF writer keeps neither speed nor nesting.
 
 ## 7. Performance of everyday operations
@@ -816,4 +816,4 @@ JSON parsing is now the bulk of open), and rendering 5,000-layer comps faster.
 |---|---|---|
 | 2026-10-10 | minor | Status line added; crate table checked against `crates/` (every crate listed); effect count and VP9 encoder description corrected |
 
-PDF document structure uses the `craft-pdf` read feature through an app-owned bounded object adapter. EffectCraft retains its drawing tree, fonts, content/image filters and EPS interpreter; ordinary object/xref limits remain 256 MiB on 64-bit and 64 MiB on 32-bit/WASM, including repair.
+PDF document structure uses the `craft-pdf` read feature through an app-owned bounded object adapter. Pulso retains its drawing tree, fonts, content/image filters and EPS interpreter; ordinary object/xref limits remain 256 MiB on 64-bit and 64 MiB on 32-bit/WASM, including repair.

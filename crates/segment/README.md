@@ -11,7 +11,7 @@ Trained models for Roto Brush and face tracking, each kind behind one swappable 
   which are the tracker's landmarks and which trace the face outline, so the tracker never
   depends on one model's layout. The classical face tracker stays built in as the fallback.
 - **`MODELS`**: the registry. Every entry must be open source under a licence compatible with
-  EffectCraft's MIT OR Apache-2.0 (`ALLOWED_LICENCES`), with its task, authors, homepage, licence
+  Pulso's MIT OR Apache-2.0 (`ALLOWED_LICENCES`), with its task, authors, homepage, licence
   URL, an app download URL when available, size and SHA-256. `load` refuses anything else.
   SAM 2 is Install from File only until a storytold-controlled mirror is available.
   The checkpoint `source` stays separate from the app download URL, so file-install guidance and
