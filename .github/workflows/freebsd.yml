@@ -28,5 +28,8 @@ permissions:
 
 jobs:
   freebsd:
-    # Intentionally tracked at @main (not SHA-pinned) so org-wide CI improvements, security fixes, and build optimizations propagate without PR churn across all craftapp repos.
-    uses: storytold/craft-common-actions/.github/workflows/freebsd.yml@main
+    uses: getnodalia/foundation/.github/workflows/freebsd.yml@976581262c95c0d95c0184149c0e1ba55485ccb3 # foundation main
+    with:
+      # The fonts commit the inherited gate used by default.
+      fonts-repository: getnodalia/foundation
+      fonts-ref: bfcbf714e45a3ea8e98f88ab2b7971372a576414
