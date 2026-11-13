@@ -22,7 +22,10 @@ concurrency:
 
 jobs:
   gate:
-    uses: storytold/craft-common-actions/.github/workflows/gate.yml@main
+    uses: getnodalia/foundation/.github/workflows/rust-gate.yml@16528aa5fba5abff2971c29ca9c4765cb15d1392 # foundation main
     with:
+      # The fonts commit the inherited gate used by default.
+      fonts-repository: getnodalia/foundation
+      fonts-ref: bfcbf714e45a3ea8e98f88ab2b7971372a576414
       os: '["macos-15"]'
       timeout-minutes: 120
